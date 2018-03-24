@@ -1,45 +1,49 @@
-**Edit a file, create a new file, and clone from Bitbucket in under 2 minutes**
+## Layouts
+Layouts are the building blocks that allow publishers to stack content that do unique things.
 
-When you're done, you can delete the content in this README and update the file with details for others getting started with your repository.
+* Individual layouts are managed in **separate field groups.**
+* Layouts are **cloned** into using ACF's flexible content.
 
-*We recommend that you open this README in another tab as you perform the tasks below. You can [watch our video](https://youtu.be/0ocf7u76WSo) for a full demo of all the steps in this tutorial. Open the video in a new tab to avoid leaving Bitbucket.*
+*Note: It is important that you never create new fields inside of the master Layout field group. You should only clone layouts into the master field group.*
 
----
+| Layout Names | Description |
+| --------- | ----------- |
+| Accordion | Uses title, content, and link |
+| Basic Content | Uses WYSIWYG |
+| Cards | Uses title, content, image, link |
+| CTA | Uses title, content, image, link. |
+| Hero | Uses image, title, subtitle, and link. |
+| List | Uses relationship, creates static or filterable lists. |
+| Pricing | Uses title, content, link. |
+| Schedule | Uses title, WYSIWYG, link. |
+| Slider | Uses title, content, link, and image. |
+| Tabbed Content | Uses title, content, link. |
 
-## Edit a file
-
-You’ll start by editing this README file to learn how to edit a file in Bitbucket.
-
-1. Click **Source** on the left side.
-2. Click the README.md link from the list of files.
-3. Click the **Edit** button.
-4. Delete the following text: *Delete this line to make a change to the README from Bitbucket.*
-5. After making your change, click **Commit** and then **Commit** again in the dialog. The commit page will open and you’ll see the change you just made.
-6. Go back to the **Source** page.
-
----
-
-## Create a file
-
-Next, you’ll add a new file to this repository.
-
-1. Click the **New file** button at the top of the **Source** page.
-2. Give the file a filename of **contributors.txt**.
-3. Enter your name in the empty file space.
-4. Click **Commit** and then **Commit** again in the dialog.
-5. Go back to the **Source** page.
-
-Before you move on, go ahead and explore the repository. You've already seen the **Source** page, but check out the **Commits**, **Branches**, and **Settings** pages.
+#### How to use layouts inside the template
+The following code example will look for a files inside of the layouts directory i.e. layouts/layout-accordion.php
+``` php
+if(have_rows('layouts')) : while (have_rows('layouts')) : the_row();
+    $layout_type = get_row_layout();
+    include(locate_template('layouts/layout-' . $layout_type . '.php'));
+endwhile; endif;
+```
 
 ---
 
-## Clone a repository
+# Common Plugins
+The following is a list of common plugins that we use on projects
 
-Use these steps to clone from SourceTree, our client for using the repository command-line free. Cloning allows you to work on your files locally. If you don't yet have SourceTree, [download and install first](https://www.sourcetreeapp.com/). If you prefer to clone from the command line, see [Clone a repository](https://confluence.atlassian.com/x/4whODQ).
-
-1. You’ll see the clone button under the **Source** heading. Click that button.
-2. Now click **Check out in SourceTree**. You may need to create a SourceTree account or log in.
-3. When you see the **Clone New** dialog in SourceTree, update the destination path and name if you’d like to and then click **Clone**.
-4. Open the directory you just created to see your repository’s files.
-
-Now that you're more familiar with your Bitbucket repository, go ahead and add a new file locally. You can [push your change back to Bitbucket with SourceTree](https://confluence.atlassian.com/x/iqyBMg), or you can [add, commit,](https://confluence.atlassian.com/x/8QhODQ) and [push from the command line](https://confluence.atlassian.com/x/NQ0zDQ).
+| Plugin Names |
+| --------- |
+| ACF Content Analysis for Yoast SEO |
+| ACF Flexible Content Modal |
+| ACF to REST API |
+| Admin Columns Pro |
+| Advanced Custom Fields PRO |
+| Compress JPEG & PNG images |
+| Gravity Forms |
+| Redirection |
+| SearchWP |
+| User Role Editor Pro |
+| WP All Import Pro |
+| Yoast SEO |
