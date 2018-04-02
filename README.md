@@ -29,7 +29,7 @@
 4. Run `cat ~/.ssh/id_rsa.pub | pbcopy` and paste in Avatar > Bitbucket Settings > SSH key
 5. Run `cd ~ then git clone --mirror git@bitbucket.org:<username>/<repo-name>.git`
 6. Run `cd ~/<repo-name>.git`
-7. Run `GIT\_WORK\_TREE=/home/<username>/public_html/dev git checkout -f master`
+7. Run `GIT_WORK_TREE=/home/<username>/public_html/dev git checkout -f master`
 8. Place the autodeploy.php script in the /public_html directory and update the script variables
 9. In the repo, add a webhook and use `http://72.52.173.139/~<username>/autodeploy.php`
 
