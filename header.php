@@ -17,7 +17,27 @@
 </head>
 
 <body <?php body_class(); ?>>
-	
+
+	<?php if (get_field('notification_display', 'option')): ?>
+	    <div class="option notification">
+	        <div class="wrapper">
+	            <div class="content">
+	                <?php the_field('notification_content', 'option'); ?>
+	            </div>
+	        </div>
+	    </div>
+	<?php endif; ?>
+
+	<?php if (get_field('cookie_notice_display', 'option')): ?>
+		<div class="option cookie-notice">
+			<div class="wrapper">
+				<div class="content">
+					<?php the_field('cookie_notice_content', 'option'); ?>
+				</div>
+			</div>
+		</div>
+	<?php endif; ?>
+
 	<?php
 		$args = array(
 			'menu' => 'main-menu',
