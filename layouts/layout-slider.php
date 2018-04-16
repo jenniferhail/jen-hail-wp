@@ -1,8 +1,3 @@
-<?php
-    global $template_url;
-    global $site_url;
-?>
-
 <div class="layout slider">
     <div class="wrapper">
         <div class="content">
@@ -26,7 +21,9 @@
                             <?php the_sub_field('content'); ?>
                             <?php include(locate_template('layouts/component-button.php')); ?>
                         </div>
-                        <img <?php acf_responsive_image($image_id, $image_large, '1600px'); ?>  alt="<?php echo $image_alt; ?>" />
+                        <div class="image">
+                            <img <?php acf_responsive_image($image_id, $image_large, '1600px'); ?>  alt="<?php echo $image_alt; ?>" />
+                        </div>
             		</li>
 
             	<?php endwhile; ?>

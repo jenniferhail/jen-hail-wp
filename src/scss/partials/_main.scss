@@ -1,0 +1,16 @@
+.splash {
+    min-height: 100vh;
+    background-color: #F26D7D;
+    ul {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        max-width: 800px;
+        height: 100vh;
+        padding: 0;
+        margin: auto;
+        font-size: 1.5em;
+        color: #fff;
+        list-style: none;
+    }
+}

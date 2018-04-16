@@ -1,7 +1,4 @@
 <?php
-    global $template_url;
-    global $site_url;
-
     $table_orientation = get_sub_field('table_orientation');
 
     $i = '0';
@@ -20,7 +17,7 @@
 
             <?php if( have_rows('dataset') ) : while( have_rows('dataset') ): the_row(); ?>
 
-                <div class="Rtable-cell"><h5><?php the_sub_field('heading'); ?></h5></div>
+                <div class="Rtable-cell"><h5 class="heading"><?php the_sub_field('heading'); ?></h5></div>
                 <?php if( have_rows('data') ) : while( have_rows('data') ): the_row(); ?>
                     <?php if ($table_orientation == 'columns') {
                         $i++;

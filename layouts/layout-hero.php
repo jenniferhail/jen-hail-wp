@@ -1,7 +1,4 @@
 <?php
-    global $template_url;
-    global $site_url;
-
     $bg_settings = get_sub_field('bg_settings');
     $image = get_sub_field('image');
     $video = get_sub_field('video');

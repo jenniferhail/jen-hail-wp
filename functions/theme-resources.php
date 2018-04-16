@@ -1,26 +1,17 @@
 <?php
     // =========================================================================
-    // VARS
-    // =========================================================================
-    global $template_url;
-    global $site_url;
-
-    $template_url = get_template_directory_uri();
-    $site_url = get_site_url();
-
-    // =========================================================================
     // REGISTER & ENQUEUE
     // =========================================================================
-    function mightyScripts($template_url){
-        wp_enqueue_style('mightily-css', $template_url . '/css/main.min.css', '', '1.0.2');
+    function mightyResources(){
+        wp_enqueue_style('mightily-css', get_template_directory_uri() . '/app/assets/css/style.min.css', '', '1.0.2');
 
         wp_deregister_script('jquery');
         wp_register_script('jquery', ("//ajax.googleapis.com/ajax/libs/jquery/2.2.4/jquery.min.js"), '', '2.2.4', true);
         wp_enqueue_script('jquery');
 
-        wp_enqueue_script('mightily-js', $template_url . '/js/main.min.js', 'jquery', '1.0.2', true );
+        wp_enqueue_script('mightily-js', get_template_directory_uri() . '/app/assets/js/scripts.min.js', 'jquery', '1.0.4', true );
     }
-    add_action('wp_enqueue_scripts', 'mightyScripts');
+    add_action('wp_enqueue_scripts', 'mightyResources');
 
     //======================================================================
 	// META TAGS

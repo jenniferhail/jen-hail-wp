@@ -20,6 +20,7 @@
 
 	<?php if (get_field('notification_display', 'option')): ?>
 	    <div class="option notification">
+			<button class="close">Close</button>
 	        <div class="wrapper">
 	            <div class="content">
 	                <?php the_field('notification_content', 'option'); ?>
@@ -30,9 +31,10 @@
 
 	<?php if (get_field('cookie_notice_display', 'option')): ?>
 		<div class="option cookie-notice">
+			<button class="close">Close</button>
 			<div class="wrapper">
 				<div class="content">
-					<?php the_field('cookie_notice_content', 'option'); ?>
+					<p><?php the_field('cookie_notice_content', 'option'); ?></p>
 				</div>
 			</div>
 		</div>

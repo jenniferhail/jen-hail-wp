@@ -1,7 +1,4 @@
 <?php
-    global $template_url;
-    global $site_url;
-
     $image = get_sub_field('image');
     $image_id = $image['ID'];
     $image_url = $image['url'];
@@ -21,7 +18,7 @@
         <div class="content">
             <h2 class="title"><?php echo $title; ?></h2>
             <?php echo $content; ?>
+            <?php include(locate_template('layouts/component-button.php')); ?>
         </div>
-        <?php include(locate_template('layouts/component-button.php')); ?>
     </div>
 </div>

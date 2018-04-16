@@ -1,7 +1,4 @@
 <?php
-    global $template_url;
-    global $site_url;
-
     $display_intro = get_sub_field('display_intro');
     $title = get_sub_field('title');
     $subtitle = get_sub_field('subtitle');

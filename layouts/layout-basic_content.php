@@ -1,7 +1,4 @@
 <?php
-    global $template_url;
-    global $site_url;
-
     $basic_content = get_sub_field('basic_content')
 ?>
 

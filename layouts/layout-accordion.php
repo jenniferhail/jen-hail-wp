@@ -1,7 +1,4 @@
 <?php
-    global $template_url;
-    global $site_url;
-
     $display_intro = get_sub_field('display_intro');
     $title = get_sub_field('title');
     $subtitle = get_sub_field('subtitle');
@@ -27,8 +24,10 @@
             		<li class="acc-item">
                         <h3 class="title"><?php the_sub_field('title'); ?></h3>
                         <div class="acc-content">
-                            <?php the_sub_field('content'); ?>
-                            <?php include(locate_template('layouts/component-button.php')); ?>
+                            <div class="acc-content-wrapper">
+                                <?php the_sub_field('content'); ?>
+                                <?php include(locate_template('layouts/component-button.php')); ?>
+                            </div>
                         </div>
             		</li>
 
