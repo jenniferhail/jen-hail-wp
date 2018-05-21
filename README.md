@@ -1,37 +1,53 @@
 ## Auto Deploy Setup
 
-### Hosting Setup - (CPANEL)
-
-1.  Create a new hosting account via WHM http://72.52.173.139/whm (some sites may have dedicated hosting)
-2.  Select “Add-on Domains” and set a domain via cPanel http://72.52.173.139/whm (Example: client.mightily.com,)
+### Hosting/Staging Setup - (WHM & CPANEL)
+1.  Create a new hosting account via WHM http://72.52.173.139/whm
+*(if your site requires dedicated hosting, you will want to replace the above IP )*
+2.  Select “Add-on Domains” and set a domain via cPanel http://72.52.173.139/cpanel 
+*(Example: client.mightily.com)*
 3. Point the add-on domain to pubic_html/dev/web
-4. Add the office IP 50.59.42.134 to the “Remote MYSQL”
+4. Create a database and a database user
+*(database: wpdb)
+(database user: dbuser)*
+5. Add the office IP 50.59.42.134 to "Remote MYSQL"
+*(This allows your local WP project to use the remote database i.e. the staging area)*
+
+### Bedrock Setup
+You will want to install Bedrock on both local and hosting enviroments, follow the Bedrock instructions found at:
+https://github.com/roots/bedrock#installation
+
+In your local project, be sure to update the ".env" in the newly created project folder with the "remote" DB credentials using 72.52.173.139 use your DB_HOST.
+
+You can find more information on bedrock at:
+https://roots.io/bedrock/
 
 ### Local Setup - (MAMP PRO)
-
- 1. Download bedrock into the project folder **(do not clone)**
- 2. Update virtual hosts /Applications/MAMP/conf/apache/extra/httpd-vhosts.conf
- 3. Create a new “HOST” in MAMP and point it to the <project>/web
- 4. Update “.env” in the project folder with the “remote” DB credentials
+1. Add a new host to MAMP PRO *i.e. local.client.com*
+2. Point it to the [project-name]/web
+3. Update virtual hosts
+`/Applications/MAMP/conf/apache/extra/httpd-vhosts.conf`
+4. Clone your project repo into
+`/Users/[user]/[project]/web/app/themes/mightily/`
 
 **vhost example**
 ```php
 <VirtualHost *:80>
-    DocumentRoot "/Users/<user>/<document-root>"
-    ServerName local.<project-name>.com
+    DocumentRoot "/Users/[user]/[project]/web"
+    ServerName local.[project-name].com
 </VirtualHost>
 ```
-### BitBucket Setup
 
-1. Fork the theme development repo at https://bitbucket.org/mightily/theme-development
-2. Clone the newly forked repo to your local machine
+### BitBucket Autodeploy Setup
+
 3. SSH into the server and run `ssh-keygen`, leaving the name and password blank
 4. Run `cat ~/.ssh/id_rsa.pub | pbcopy` and paste in Avatar > Bitbucket Settings > SSH key
 5. Run `cd ~ then git clone --mirror git@bitbucket.org:<username>/<repo-name>.git`
 6. Run `cd ~/<repo-name>.git`
 7. Run `GIT_WORK_TREE=/home/<username>/public_html/dev git checkout -f master`
-8. Place the autodeploy.php script in the /public_html directory and update the script variables
+8. Place the autodeploy.php script in the /public_html directory and update the script variables to point to your theme folder
 9. In the repo, add a webhook and use `http://72.52.173.139/~<username>/autodeploy.php`
+
+This will automatically deploy any changes you make to the theme in your theme directory.
 
 ### Troubleshooting
 If you visit the site in a browser and you see a 500 error, you might need to update the directory and file permissions via SSH
