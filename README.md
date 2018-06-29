@@ -3,7 +3,7 @@
 ### Hosting/Staging Setup - (WHM & CPANEL)
 1.  Create a new hosting account via WHM http://72.52.173.139/whm
 *(if your site requires dedicated hosting, you will want to replace the above IP )*
-2.  Select ‚ÄúAdd-on Domains‚Äù and set a domain via cPanel http://72.52.173.139/cpanel 
+2.  Select ìAdd-on Domainsî and set a domain via cPanel http://72.52.173.139/cpanel 
 *(Example: client.mightily.com)*
 3. Point the add-on domain to pubic_html/dev/web
 4. Create a database and a database user
@@ -60,6 +60,19 @@ If you visit the site in a browser and you see a 500 error, you might need to up
 
 #### Test SSH connectivity to bitbucket
 `ssh -Tv git@bitbucket.org`
+
+## Server Root (Just before launch)
+The following insutrctions outline what needs to happen just before a site launched to change the web root of the user account (on the server)
+
+Update document root for cpanel as well as apache. Need to edit/create two files
+/usr/local/apache/conf/userdata/USERNAME/DOMAIN.COM/config.conf
+/var/cpanel/userdata/USERNAME/DOMAIN.COM
+
+Scan config file directories for apache configuration
+/scripts/ensure_vhost_includes --all-users
+
+then run /scripts/rebuildhttpdconf to rebuild conf file
+then run service httpd restart to restart apache
 
 ## Layouts
 Layouts are the building blocks that allow publishers to stack content that do unique things.
