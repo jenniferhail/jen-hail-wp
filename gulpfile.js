@@ -41,7 +41,7 @@ gulp.task('css', function () {
     .pipe(browserSync.reload({stream:true}));
 });
 
-var jsFiles = ['src/js/wrapper-begin.js', 'src/js/layouts/*.js', 'src/js/scripts.js', 'src/js/wrapper-end.js'],
+var jsFiles = ['src/js/wrapper-begin.js', 'src/js/layouts/*.js', 'src/js/vendors/*.js', 'src/js/scripts.js', 'src/js/wrapper-end.js'],
     jsDest = 'app/assets/js';
 
 gulp.task('js',function(){
