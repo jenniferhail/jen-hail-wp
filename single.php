@@ -9,6 +9,6 @@
 			</div>
         </article>
     </div>
-</div>
+</section>
 
 <?php get_footer(); ?>
