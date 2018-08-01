@@ -3,7 +3,6 @@ var gulp = require('gulp'),
     browserSync = require('browser-sync'),
     autoprefixer = require('gulp-autoprefixer'),
     uglify = require('gulp-uglify'),
-    jshint = require('gulp-jshint'),
     header  = require('gulp-header'),
     rename = require('gulp-rename'),
     cssnano = require('gulp-cssnano'),
@@ -24,11 +23,22 @@ var banner = [
   '\n'
 ].join('');
 
+var jsVendorFiles = [
+    'node_modules/rellax/rellax.js',
+    'node_modules/@glidejs/glide/dist/glide.js',
+    'node_modules/aos/dist/aos.js'
+];
+
 var cssFiles = ['src/scss/style.scss'],
     cssDest = 'app/assets/css';
 
+var jsCoreFiles = ['src/js/layouts/*.js', 'src/js/scripts.js'],
+    jsDest = 'app/assets/js';
+
+var jsFiles = jsVendorFiles.concat(jsCoreFiles);
+
 gulp.task('css', function () {
-    return gulp.src(cssFiles)
+    gulp.src(cssFiles)
     .pipe(sourcemaps.init())
     .pipe(sass({errLogToConsole: true}))
     .pipe(autoprefixer('last 4 version'))
@@ -41,15 +51,10 @@ gulp.task('css', function () {
     .pipe(browserSync.reload({stream:true}));
 });
 
-var jsFiles = ['src/js/wrapper-begin.js', 'src/js/layouts/*.js', 'src/js/vendors/*.js', 'src/js/scripts.js', 'src/js/wrapper-end.js'],
-    jsDest = 'app/assets/js';
-
 gulp.task('js',function(){
   gulp.src(jsFiles)
     .pipe(sourcemaps.init())
     .pipe(concat('scripts.js'))
-    .pipe(jshint('.jshintrc'))
-    .pipe(jshint.reporter('default'))
     .pipe(header(banner, { package : package }))
     .pipe(gulp.dest(jsDest))
     .pipe(uglify().on('error', gutil.log))

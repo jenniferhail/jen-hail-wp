@@ -7,9 +7,6 @@ cookieNotice = {
 	init: function() {
 		cn = this.settings;
 		this.bindUIActions();
-		// Optional - Expose scoped vars to global $. Use in console with $.expose
-		$.expose.cn = cn;
-		$.expose.cookieNotice = cookieNotice;
 		console.log('cookieNotice loaded!');
 	},
 	bindUIActions: function() {

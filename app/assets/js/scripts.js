@@ -3,15 +3,3982 @@
  * Big things come in small packages.
  * http://mightily.com
  * @author Chris Miller
- * @version 1.0.0
+ * @version 1.1.0
  * Copyright 2018. MIT licensed.
  */
-(function ($, window, document, undefined) {
 
-  'use strict';
+// ------------------------------------------
+// Rellax.js
+// Buttery smooth parallax library
+// Copyright (c) 2016 Moe Amaya (@moeamaya)
+// MIT license
+//
+// Thanks to Paraxify.js and Jaime Cabllero
+// for parallax concepts
+// ------------------------------------------
 
-  $(function () {
-	  $.expose = {};
+(function (root, factory) {
+  if (typeof define === 'function' && define.amd) {
+    // AMD. Register as an anonymous module.
+    define([], factory);
+  } else if (typeof module === 'object' && module.exports) {
+    // Node. Does not work with strict CommonJS, but
+    // only CommonJS-like environments that support module.exports,
+    // like Node.
+    module.exports = factory();
+  } else {
+    // Browser globals (root is window)
+    root.Rellax = factory();
+  }
+}(this, function () {
+  var Rellax = function(el, options){
+    "use strict";
+
+    var self = Object.create(Rellax.prototype);
+
+    var posY = 0;
+    var screenY = 0;
+    var posX = 0;
+    var screenX = 0;
+    var blocks = [];
+    var pause = true;
+
+    // check what requestAnimationFrame to use, and if
+    // it's not supported, use the onscroll event
+    var loop = window.requestAnimationFrame ||
+      window.webkitRequestAnimationFrame ||
+      window.mozRequestAnimationFrame ||
+      window.msRequestAnimationFrame ||
+      window.oRequestAnimationFrame ||
+      function(callback){ setTimeout(callback, 1000 / 60); };
+
+    // check which transform property to use
+    var transformProp = window.transformProp || (function(){
+        var testEl = document.createElement('div');
+        if (testEl.style.transform === null) {
+          var vendors = ['Webkit', 'Moz', 'ms'];
+          for (var vendor in vendors) {
+            if (testEl.style[ vendors[vendor] + 'Transform' ] !== undefined) {
+              return vendors[vendor] + 'Transform';
+            }
+          }
+        }
+        return 'transform';
+      })();
+
+    // Default Settings
+    self.options = {
+      speed: -2,
+      center: false,
+      wrapper: null,
+      round: true,
+      vertical: true,
+      horizontal: false,
+      callback: function() {},
+    };
+
+    // User defined options (might have more in the future)
+    if (options){
+      Object.keys(options).forEach(function(key){
+        self.options[key] = options[key];
+      });
+    }
+
+    // By default, rellax class
+    if (!el) {
+      el = '.rellax';
+    }
+
+    // check if el is a className or a node
+    var elements = typeof el === 'string' ? document.querySelectorAll(el) : [el];
+
+    // Now query selector
+    if (elements.length > 0) {
+      self.elems = elements;
+    }
+
+    // The elements don't exist
+    else {
+      throw new Error("The elements you're trying to select don't exist.");
+    }
+
+    // Has a wrapper and it exists
+    if (self.options.wrapper) {
+      if (!self.options.wrapper.nodeType) {
+        var wrapper = document.querySelector(self.options.wrapper);
+
+        if (wrapper) {
+          self.options.wrapper = wrapper;
+        } else {
+          throw new Error("The wrapper you're trying to use don't exist.");
+        }
+      }
+    }
+
+
+    // Get and cache initial position of all elements
+    var cacheBlocks = function() {
+      for (var i = 0; i < self.elems.length; i++){
+        var block = createBlock(self.elems[i]);
+        blocks.push(block);
+      }
+    };
+
+
+    // Let's kick this script off
+    // Build array for cached element values
+    var init = function() {
+      for (var i = 0; i < blocks.length; i++){
+        self.elems[i].style.cssText = blocks[i].style;
+      }
+
+      blocks = [];
+
+      screenY = window.innerHeight;
+      screenX = window.innerWidth;
+      setPosition();
+
+      cacheBlocks();
+
+      // If paused, unpause and set listener for window resizing events
+      if (pause) {
+        window.addEventListener('resize', init);
+        pause = false;
+      }
+      animate();
+    };
+
+    // We want to cache the parallax blocks'
+    // values: base, top, height, speed
+    // el: is dom object, return: el cache values
+    var createBlock = function(el) {
+      var dataPercentage = el.getAttribute( 'data-rellax-percentage' );
+      var dataSpeed = el.getAttribute( 'data-rellax-speed' );
+      var dataZindex = el.getAttribute( 'data-rellax-zindex' ) || 0;
+
+      // initializing at scrollY = 0 (top of browser), scrollX = 0 (left of browser)
+      // ensures elements are positioned based on HTML layout.
+      //
+      // If the element has the percentage attribute, the posY and posX needs to be
+      // the current scroll position's value, so that the elements are still positioned based on HTML layout
+      var wrapperPosY = self.options.wrapper ? self.options.wrapper.scrollTop : (window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop);
+      var posY = self.options.vertical ? ( dataPercentage || self.options.center ? wrapperPosY : 0 ) : 0;
+      var posX = self.options.horizontal ? ( dataPercentage || self.options.center ? (window.pageXOffset || document.documentElement.scrollLeft || document.body.scrollLeft) : 0 ) : 0;
+
+      var blockTop = posY + el.getBoundingClientRect().top;
+      var blockHeight = el.clientHeight || el.offsetHeight || el.scrollHeight;
+
+      var blockLeft = posX + el.getBoundingClientRect().left;
+      var blockWidth = el.clientWidth || el.offsetWidth || el.scrollWidth;
+
+      // apparently parallax equation everyone uses
+      var percentageY = dataPercentage ? dataPercentage : (posY - blockTop + screenY) / (blockHeight + screenY);
+      var percentageX = dataPercentage ? dataPercentage : (posX - blockLeft + screenX) / (blockWidth + screenX);
+      if(self.options.center){ percentageX = 0.5; percentageY = 0.5; }
+
+      // Optional individual block speed as data attr, otherwise global speed
+      var speed = dataSpeed ? dataSpeed : self.options.speed;
+
+      var bases = updatePosition(percentageX, percentageY, speed);
+
+      // ~~Store non-translate3d transforms~~
+      // Store inline styles and extract transforms
+      var style = el.style.cssText;
+      var transform = '';
+
+      // Check if there's an inline styled transform
+      if (style.indexOf('transform') >= 0) {
+        // Get the index of the transform
+        var index = style.indexOf('transform');
+
+        // Trim the style to the transform point and get the following semi-colon index
+        var trimmedStyle = style.slice(index);
+        var delimiter = trimmedStyle.indexOf(';');
+
+        // Remove "transform" string and save the attribute
+        if (delimiter) {
+          transform = " " + trimmedStyle.slice(11, delimiter).replace(/\s/g,'');
+        } else {
+          transform = " " + trimmedStyle.slice(11).replace(/\s/g,'');
+        }
+      }
+
+      return {
+        baseX: bases.x,
+        baseY: bases.y,
+        top: blockTop,
+        left: blockLeft,
+        height: blockHeight,
+        width: blockWidth,
+        speed: speed,
+        style: style,
+        transform: transform,
+        zindex: dataZindex
+      };
+    };
+
+    // set scroll position (posY, posX)
+    // side effect method is not ideal, but okay for now
+    // returns true if the scroll changed, false if nothing happened
+    var setPosition = function() {
+      var oldY = posY;
+      var oldX = posX;
+
+      posY = self.options.wrapper ? self.options.wrapper.scrollTop : (document.documentElement || document.body.parentNode || document.body).scrollTop || window.pageYOffset;
+      posX = self.options.wrapper ? self.options.wrapper.scrollLeft : (document.documentElement || document.body.parentNode || document.body).scrollLeft || window.pageXOffset;
+
+
+      if (oldY != posY && self.options.vertical) {
+        // scroll changed, return true
+        return true;
+      }
+
+      if (oldX != posX && self.options.horizontal) {
+        // scroll changed, return true
+        return true;
+      }
+
+      // scroll did not change
+      return false;
+    };
+
+    // Ahh a pure function, gets new transform value
+    // based on scrollPosition and speed
+    // Allow for decimal pixel values
+    var updatePosition = function(percentageX, percentageY, speed) {
+      var result = {};
+      var valueX = (speed * (100 * (1 - percentageX)));
+      var valueY = (speed * (100 * (1 - percentageY)));
+
+      result.x = self.options.round ? Math.round(valueX) : Math.round(valueX * 100) / 100;
+      result.y = self.options.round ? Math.round(valueY) : Math.round(valueY * 100) / 100;
+
+      return result;
+    };
+
+    // Loop
+    var update = function() {
+      if (setPosition() && pause === false) {
+        animate();
+      }
+
+      // loop again
+      loop(update);
+    };
+
+    // Transform3d on parallax element
+    var animate = function() {
+      var positions;
+      for (var i = 0; i < self.elems.length; i++){
+        var percentageY = ((posY - blocks[i].top + screenY) / (blocks[i].height + screenY));
+        var percentageX = ((posX - blocks[i].left + screenX) / (blocks[i].width + screenX));
+
+        // Subtracting initialize value, so element stays in same spot as HTML
+        positions = updatePosition(percentageX, percentageY, blocks[i].speed);// - blocks[i].baseX;
+        var positionY = positions.y - blocks[i].baseY;
+        var positionX = positions.x - blocks[i].baseX;
+
+        var zindex = blocks[i].zindex;
+
+        // Move that element
+        // (Set the new translation and append initial inline transforms.)
+        var translate = 'translate3d(' + (self.options.horizontal ? positionX : '0') + 'px,' + (self.options.vertical ? positionY : '0') + 'px,' + zindex + 'px) ' + blocks[i].transform;
+        self.elems[i].style[transformProp] = translate;
+      }
+      self.options.callback(positions);
+    };
+
+    self.destroy = function() {
+      for (var i = 0; i < self.elems.length; i++){
+        self.elems[i].style.cssText = blocks[i].style;
+      }
+
+      // Remove resize event listener if not pause, and pause
+      if (!pause) {
+        window.removeEventListener('resize', init);
+        pause = true;
+      }
+    };
+
+    // Init
+    init();
+
+    // Start the loop
+    update();
+
+    // Allow to recalculate the initial values whenever we want
+    self.refresh = init;
+
+    return self;
+  };
+  return Rellax;
+}));
+
+/*!
+ * Glide.js v3.2.2
+ * (c) 2013-2018 Jędrzej Chałubek <jedrzej.chalubek@gmail.com> (http://jedrzejchalubek.com/)
+ * Released under the MIT License.
+ */
+
+(function (global, factory) {
+  typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
+  typeof define === 'function' && define.amd ? define(factory) :
+  (global.Glide = factory());
+}(this, (function () { 'use strict';
+
+  var defaults = {
+    /**
+     * Type of the movement.
+     *
+     * Available types:
+     * `slider` - Rewinds slider to the start/end when it reaches the first or last slide.
+     * `carousel` - Changes slides without starting over when it reaches the first or last slide.
+     *
+     * @type {String}
+     */
+    type: 'slider',
+
+    /**
+     * Start at specific slide number defined with zero-based index.
+     *
+     * @type {Number}
+     */
+    startAt: 0,
+
+    /**
+     * A number of slides visible on the single viewport.
+     *
+     * @type {Number}
+     */
+    perView: 1,
+
+    /**
+     * Focus currently active slide at a specified position in the track.
+     *
+     * Available inputs:
+     * `center` - Current slide will be always focused at the center of a track.
+     * `0,1,2,3...` - Current slide will be focused on the specified zero-based index.
+     *
+     * @type {String|Number}
+     */
+    focusAt: 0,
+
+    /**
+     * A size of the gap added between slides.
+     *
+     * @type {Number}
+     */
+    gap: 10,
+
+    /**
+     * Change slides after a specified interval. Use `false` for turning off autoplay.
+     *
+     * @type {Number|Boolean}
+     */
+    autoplay: false,
+
+    /**
+     * Stop autoplay on mouseover event.
+     *
+     * @type {Boolean}
+     */
+    hoverpause: true,
+
+    /**
+     * Allow for changing slides with left and right keyboard arrows.
+     *
+     * @type {Boolean}
+     */
+    keyboard: true,
+
+    /**
+     * Stop running `perView` number of slides from the end. Use this
+     * option if you don't want to have an empty space after
+     * a slider. Works only with `slider` type and a
+     * non-centered `focusAt` setting.
+     *
+     * @type {Boolean}
+     */
+    bound: false,
+
+    /**
+     * Minimal swipe distance needed to change the slide. Use `false` for turning off a swiping.
+     *
+     * @type {Number|Boolean}
+     */
+    swipeThreshold: 80,
+
+    /**
+     * Minimal mouse drag distance needed to change the slide. Use `false` for turning off a dragging.
+     *
+     * @type {Number|Boolean}
+     */
+    dragThreshold: 120,
+
+    /**
+     * A maximum number of slides to which movement will be made on swiping or dragging. Use `false` for unlimited.
+     *
+     * @type {Number|Boolean}
+     */
+    perTouch: false,
+
+    /**
+     * Moving distance ratio of the slides on a swiping and dragging.
+     *
+     * @type {Number}
+     */
+    touchRatio: 0.5,
+
+    /**
+     * Angle required to activate slides moving on swiping or dragging.
+     *
+     * @type {Number}
+     */
+    touchAngle: 45,
+
+    /**
+     * Duration of the animation in milliseconds.
+     *
+     * @type {Number}
+     */
+    animationDuration: 400,
+
+    /**
+     * Allows looping the `slider` type. Slider will rewind to the first/last slide when it's at the start/end.
+     *
+     * @type {Boolean}
+     */
+    rewind: true,
+
+    /**
+     * Duration of the rewinding animation of the `slider` type in milliseconds.
+     *
+     * @type {Number}
+     */
+    rewindDuration: 800,
+
+    /**
+     * Easing function for the animation.
+     *
+     * @type {String}
+     */
+    animationTimingFunc: 'cubic-bezier(0.165, 0.840, 0.440, 1.000)',
+
+    /**
+     * Throttle costly events at most once per every wait milliseconds.
+     *
+     * @type {Number}
+     */
+    throttle: 10,
+
+    /**
+     * Moving direction mode.
+     *
+     * Available inputs:
+     * - 'ltr' - left to right movement,
+     * - 'rtl' - right to left movement.
+     *
+     * @type {String}
+     */
+    direction: 'ltr',
+
+    /**
+     * The distance value of the next and previous viewports which
+     * have to peek in the current view. Accepts number and
+     * pixels as a string. Left and right peeking can be
+     * set up separately with a directions object.
+     *
+     * For example:
+     * `100` - Peek 100px on the both sides.
+     * { before: 100, after: 50 }` - Peek 100px on the left side and 50px on the right side.
+     *
+     * @type {Number|String|Object}
+     */
+    peek: 0,
+
+    /**
+     * Collection of options applied at specified media breakpoints.
+     * For example: display two slides per view under 800px.
+     * `{
+     *   '800px': {
+     *     perView: 2
+     *   }
+     * }`
+     */
+    breakpoints: {},
+
+    /**
+     * Collection of internally used HTML classes.
+     *
+     * @todo Refactor `slider` and `carousel` properties to single `type: { slider: '', carousel: '' }` object
+     * @type {Object}
+     */
+    classes: {
+      direction: {
+        ltr: 'glide--ltr',
+        rtl: 'glide--rtl'
+      },
+      slider: 'glide--slider',
+      carousel: 'glide--carousel',
+      swipeable: 'glide--swipeable',
+      dragging: 'glide--dragging',
+      cloneSlide: 'glide__slide--clone',
+      activeNav: 'glide__bullet--active',
+      activeSlide: 'glide__slide--active',
+      disabledArrow: 'glide__arrow--disabled'
+    }
+  };
+
+  /**
+   * Outputs warning message to the bowser console.
+   *
+   * @param  {String} msg
+   * @return {Void}
+   */
+  function warn(msg) {
+    console.error("[Glide warn]: " + msg);
+  }
+
+  var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) {
+    return typeof obj;
+  } : function (obj) {
+    return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj;
+  };
+
+  var classCallCheck = function (instance, Constructor) {
+    if (!(instance instanceof Constructor)) {
+      throw new TypeError("Cannot call a class as a function");
+    }
+  };
+
+  var createClass = function () {
+    function defineProperties(target, props) {
+      for (var i = 0; i < props.length; i++) {
+        var descriptor = props[i];
+        descriptor.enumerable = descriptor.enumerable || false;
+        descriptor.configurable = true;
+        if ("value" in descriptor) descriptor.writable = true;
+        Object.defineProperty(target, descriptor.key, descriptor);
+      }
+    }
+
+    return function (Constructor, protoProps, staticProps) {
+      if (protoProps) defineProperties(Constructor.prototype, protoProps);
+      if (staticProps) defineProperties(Constructor, staticProps);
+      return Constructor;
+    };
+  }();
+
+  var _extends = Object.assign || function (target) {
+    for (var i = 1; i < arguments.length; i++) {
+      var source = arguments[i];
+
+      for (var key in source) {
+        if (Object.prototype.hasOwnProperty.call(source, key)) {
+          target[key] = source[key];
+        }
+      }
+    }
+
+    return target;
+  };
+
+  var get = function get(object, property, receiver) {
+    if (object === null) object = Function.prototype;
+    var desc = Object.getOwnPropertyDescriptor(object, property);
+
+    if (desc === undefined) {
+      var parent = Object.getPrototypeOf(object);
+
+      if (parent === null) {
+        return undefined;
+      } else {
+        return get(parent, property, receiver);
+      }
+    } else if ("value" in desc) {
+      return desc.value;
+    } else {
+      var getter = desc.get;
+
+      if (getter === undefined) {
+        return undefined;
+      }
+
+      return getter.call(receiver);
+    }
+  };
+
+  var inherits = function (subClass, superClass) {
+    if (typeof superClass !== "function" && superClass !== null) {
+      throw new TypeError("Super expression must either be null or a function, not " + typeof superClass);
+    }
+
+    subClass.prototype = Object.create(superClass && superClass.prototype, {
+      constructor: {
+        value: subClass,
+        enumerable: false,
+        writable: true,
+        configurable: true
+      }
+    });
+    if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass;
+  };
+
+  var possibleConstructorReturn = function (self, call) {
+    if (!self) {
+      throw new ReferenceError("this hasn't been initialised - super() hasn't been called");
+    }
+
+    return call && (typeof call === "object" || typeof call === "function") ? call : self;
+  };
+
+  /**
+   * Converts value entered as number
+   * or string to integer value.
+   *
+   * @param {String} value
+   * @returns {Number}
+   */
+  function toInt(value) {
+    return parseInt(value);
+  }
+
+  /**
+   * Converts value entered as number
+   * or string to flat value.
+   *
+   * @param {String} value
+   * @returns {Number}
+   */
+  function toFloat(value) {
+    return parseFloat(value);
+  }
+
+  /**
+   * Indicates whether the specified value is a string.
+   *
+   * @param  {*}   value
+   * @return {Boolean}
+   */
+  function isString(value) {
+    return typeof value === 'string';
+  }
+
+  /**
+   * Indicates whether the specified value is an object.
+   *
+   * @param  {*} value
+   * @return {Boolean}
+   *
+   * @see https://github.com/jashkenas/underscore
+   */
+  function isObject(value) {
+    var type = typeof value === 'undefined' ? 'undefined' : _typeof(value);
+
+    return type === 'function' || type === 'object' && !!value; // eslint-disable-line no-mixed-operators
+  }
+
+  /**
+   * Indicates whether the specified value is a number.
+   *
+   * @param  {*} value
+   * @return {Boolean}
+   */
+  function isNumber(value) {
+    return typeof value === 'number';
+  }
+
+  /**
+   * Indicates whether the specified value is a function.
+   *
+   * @param  {*} value
+   * @return {Boolean}
+   */
+  function isFunction(value) {
+    return typeof value === 'function';
+  }
+
+  /**
+   * Indicates whether the specified value is undefined.
+   *
+   * @param  {*} value
+   * @return {Boolean}
+   */
+  function isUndefined(value) {
+    return typeof value === 'undefined';
+  }
+
+  /**
+   * Indicates whether the specified value is an array.
+   *
+   * @param  {*} value
+   * @return {Boolean}
+   */
+  function isArray(value) {
+    return value.constructor === Array;
+  }
+
+  /**
+   * Creates and initializes specified collection of extensions.
+   * Each extension receives access to instance of glide and rest of components.
+   *
+   * @param {Object} glide
+   * @param {Object} extensions
+   *
+   * @returns {Object}
+   */
+  function mount(glide, extensions, events) {
+    var components = {};
+
+    for (var name in extensions) {
+      if (isFunction(extensions[name])) {
+        components[name] = extensions[name](glide, components, events);
+      } else {
+        warn('Extension must be a function');
+      }
+    }
+
+    for (var _name in components) {
+      if (isFunction(components[_name].mount)) {
+        components[_name].mount();
+      }
+    }
+
+    return components;
+  }
+
+  /**
+   * Defines getter and setter property on the specified object.
+   *
+   * @param  {Object} obj         Object where property has to be defined.
+   * @param  {String} prop        Name of the defined property.
+   * @param  {Object} definition  Get and set definitions for the property.
+   * @return {Void}
+   */
+  function define(obj, prop, definition) {
+    Object.defineProperty(obj, prop, definition);
+  }
+
+  /**
+   * Sorts aphabetically object keys.
+   *
+   * @param  {Object} obj
+   * @return {Object}
+   */
+  function sortKeys(obj) {
+    return Object.keys(obj).sort().reduce(function (r, k) {
+      r[k] = obj[k];
+
+      return r[k], r;
+    }, {});
+  }
+
+  /**
+   * Merges passed settings object with default options.
+   *
+   * @param  {Object} defaults
+   * @param  {Object} settings
+   * @return {Object}
+   */
+  function mergeOptions(defaults, settings) {
+    var options = _extends({}, defaults, settings);
+
+    // `Object.assign` do not deeply merge objects, so we
+    // have to do it manually for every nested object
+    // in options. Although it does not look smart,
+    // it's smaller and faster than some fancy
+    // merging deep-merge algorithm script.
+    if (settings.hasOwnProperty('classes')) {
+      options.classes = _extends({}, defaults.classes, settings.classes);
+
+      if (settings.classes.hasOwnProperty('direction')) {
+        options.classes.direction = _extends({}, defaults.classes.direction, settings.classes.direction);
+      }
+    }
+
+    if (settings.hasOwnProperty('breakpoints')) {
+      options.breakpoints = _extends({}, defaults.breakpoints, settings.breakpoints);
+    }
+
+    return options;
+  }
+
+  var EventsBus = function () {
+    /**
+     * Construct a EventBus instance.
+     *
+     * @param {Object} events
+     */
+    function EventsBus() {
+      var events = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+      classCallCheck(this, EventsBus);
+
+      this.events = events;
+      this.hop = events.hasOwnProperty;
+    }
+
+    /**
+     * Adds listener to the specifed event.
+     *
+     * @param {String|Array} event
+     * @param {Function} handler
+     */
+
+
+    createClass(EventsBus, [{
+      key: 'on',
+      value: function on(event, handler) {
+        if (isArray(event)) {
+          for (var i = 0; i < event.length; i++) {
+            this.on(event[i], handler);
+          }
+        }
+
+        // Create the event's object if not yet created
+        if (!this.hop.call(this.events, event)) {
+          this.events[event] = [];
+        }
+
+        // Add the handler to queue
+        var index = this.events[event].push(handler) - 1;
+
+        // Provide handle back for removal of event
+        return {
+          remove: function remove() {
+            delete this.events[event][index];
+          }
+        };
+      }
+
+      /**
+       * Runs registered handlers for specified event.
+       *
+       * @param {String|Array} event
+       * @param {Object=} context
+       */
+
+    }, {
+      key: 'emit',
+      value: function emit(event, context) {
+        if (isArray(event)) {
+          for (var i = 0; i < event.length; i++) {
+            this.emit(event[i], context);
+          }
+        }
+
+        // If the event doesn't exist, or there's no handlers in queue, just leave
+        if (!this.hop.call(this.events, event)) {
+          return;
+        }
+
+        // Cycle through events queue, fire!
+        this.events[event].forEach(function (item) {
+          item(context || {});
+        });
+      }
+    }]);
+    return EventsBus;
+  }();
+
+  var Glide = function () {
+    /**
+     * Construct glide.
+     *
+     * @param  {String} selector
+     * @param  {Object} options
+     */
+    function Glide(selector) {
+      var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+      classCallCheck(this, Glide);
+
+      this._c = {};
+      this._t = [];
+      this._e = new EventsBus();
+
+      this.disabled = false;
+      this.selector = selector;
+      this.settings = mergeOptions(defaults, options);
+      this.index = this.settings.startAt;
+    }
+
+    /**
+     * Initializes glide.
+     *
+     * @param {Object} extensions Collection of extensions to initialize.
+     * @return {Glide}
+     */
+
+
+    createClass(Glide, [{
+      key: 'mount',
+      value: function mount$$1() {
+        var extensions = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+
+        this._e.emit('mount.before');
+
+        if (isObject(extensions)) {
+          this._c = mount(this, extensions, this._e);
+        } else {
+          warn('You need to provide a object on `mount()`');
+        }
+
+        this._e.emit('mount.after');
+
+        return this;
+      }
+
+      /**
+       * Collects an instance `translate` transformers.
+       *
+       * @param  {Array} transformers Collection of transformers.
+       * @return {Void}
+       */
+
+    }, {
+      key: 'mutate',
+      value: function mutate() {
+        var transformers = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : [];
+
+        if (isArray(transformers)) {
+          this._t = transformers;
+        } else {
+          warn('You need to provide a array on `mutate()`');
+        }
+
+        return this;
+      }
+
+      /**
+       * Updates glide with specified settings.
+       *
+       * @param {Object} settings
+       * @return {Glide}
+       */
+
+    }, {
+      key: 'update',
+      value: function update() {
+        var settings = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+
+        this.settings = mergeOptions(this.settings, settings);
+
+        if (settings.hasOwnProperty('startAt')) {
+          this.index = settings.startAt;
+        }
+
+        this._e.emit('update');
+
+        return this;
+      }
+
+      /**
+       * Change slide with specified pattern. A pattern must be in the special format:
+       * `>` - Move one forward
+       * `<` - Move one backward
+       * `={i}` - Go to {i} zero-based slide (eq. '=1', will go to second slide)
+       * `>>` - Rewinds to end (last slide)
+       * `<<` - Rewinds to start (first slide)
+       *
+       * @param {String} pattern
+       * @return {Glide}
+       */
+
+    }, {
+      key: 'go',
+      value: function go(pattern) {
+        this._c.Run.make(pattern);
+
+        return this;
+      }
+
+      /**
+       * Move track by specified distance.
+       *
+       * @param {String} distance
+       * @return {Glide}
+       */
+
+    }, {
+      key: 'move',
+      value: function move(distance) {
+        this._c.Transition.disable();
+        this._c.Move.make(distance);
+
+        return this;
+      }
+
+      /**
+       * Destroy instance and revert all changes done by this._c.
+       *
+       * @return {Glide}
+       */
+
+    }, {
+      key: 'destroy',
+      value: function destroy() {
+        this._e.emit('destroy');
+
+        return this;
+      }
+
+      /**
+       * Start instance autoplaying.
+       *
+       * @param {Boolean|Number} interval Run autoplaying with passed interval regardless of `autoplay` settings
+       * @return {Glide}
+       */
+
+    }, {
+      key: 'play',
+      value: function play() {
+        var interval = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : false;
+
+        if (interval) {
+          this.settings.autoplay = interval;
+        }
+
+        this._e.emit('play');
+
+        return this;
+      }
+
+      /**
+       * Stop instance autoplaying.
+       *
+       * @return {Glide}
+       */
+
+    }, {
+      key: 'pause',
+      value: function pause() {
+        this._e.emit('pause');
+
+        return this;
+      }
+
+      /**
+       * Sets glide into a idle status.
+       *
+       * @return {Glide}
+       */
+
+    }, {
+      key: 'disable',
+      value: function disable() {
+        this.disabled = true;
+
+        return this;
+      }
+
+      /**
+       * Sets glide into a active status.
+       *
+       * @return {Glide}
+       */
+
+    }, {
+      key: 'enable',
+      value: function enable() {
+        this.disabled = false;
+
+        return this;
+      }
+
+      /**
+       * Adds cuutom event listener with handler.
+       *
+       * @param  {String|Array} event
+       * @param  {Function} handler
+       * @return {Glide}
+       */
+
+    }, {
+      key: 'on',
+      value: function on(event, handler) {
+        this._e.on(event, handler);
+
+        return this;
+      }
+
+      /**
+       * Checks if glide is a precised type.
+       *
+       * @param  {String} name
+       * @return {Boolean}
+       */
+
+    }, {
+      key: 'isType',
+      value: function isType(name) {
+        return this.settings.type === name;
+      }
+
+      /**
+       * Gets value of the core options.
+       *
+       * @return {Object}
+       */
+
+    }, {
+      key: 'settings',
+      get: function get$$1() {
+        return this._o;
+      }
+
+      /**
+       * Sets value of the core options.
+       *
+       * @param  {Object} o
+       * @return {Void}
+       */
+      ,
+      set: function set$$1(o) {
+        if (isObject(o)) {
+          this._o = o;
+        } else {
+          warn('Options must be an `object` instance.');
+        }
+      }
+
+      /**
+       * Gets current index of the slider.
+       *
+       * @return {Object}
+       */
+
+    }, {
+      key: 'index',
+      get: function get$$1() {
+        return this._i;
+      }
+
+      /**
+       * Sets current index a slider.
+       *
+       * @return {Object}
+       */
+      ,
+      set: function set$$1(i) {
+        this._i = toInt(i);
+      }
+
+      /**
+       * Gets type name of the slider.
+       *
+       * @return {String}
+       */
+
+    }, {
+      key: 'type',
+      get: function get$$1() {
+        return this.settings.type;
+      }
+
+      /**
+       * Gets value of the idle status.
+       *
+       * @return {Boolean}
+       */
+
+    }, {
+      key: 'disabled',
+      get: function get$$1() {
+        return this._d;
+      }
+
+      /**
+       * Sets value of the idle status.
+       *
+       * @return {Boolean}
+       */
+      ,
+      set: function set$$1(status) {
+        this._d = !!status;
+      }
+    }]);
+    return Glide;
+  }();
+
+  function Run (Glide, Components, Events) {
+    var Run = {
+      /**
+       * Initializes autorunning of the glide.
+       *
+       * @return {Void}
+       */
+      mount: function mount() {
+        this._o = false;
+      },
+
+
+      /**
+       * Makes glides running based on the passed moving schema.
+       *
+       * @param {String} move
+       */
+      make: function make(move) {
+        var _this = this;
+
+        if (!Glide.disabled) {
+          Glide.disable();
+
+          this.move = move;
+
+          Events.emit('run.before', this.move);
+
+          this.calculate();
+
+          Events.emit('run', this.move);
+
+          Components.Transition.after(function () {
+            if (_this.isOffset('<') || _this.isOffset('>')) {
+              _this._o = false;
+
+              Events.emit('run.offset', _this.move);
+            }
+
+            Events.emit('run.after', _this.move);
+
+            Glide.enable();
+          });
+        }
+      },
+
+
+      /**
+       * Calculates current index based on defined move.
+       *
+       * @return {Void}
+       */
+      calculate: function calculate() {
+        var move = this.move,
+            length = this.length;
+        var steps = move.steps,
+            direction = move.direction;
+
+
+        var countableSteps = isNumber(toInt(steps)) && toInt(steps) !== 0;
+
+        switch (direction) {
+          case '>':
+            if (steps === '>') {
+              Glide.index = length;
+            } else if (this.isEnd()) {
+              if (!(Glide.isType('slider') && !Glide.settings.rewind)) {
+                this._o = true;
+
+                Glide.index = 0;
+              }
+
+              Events.emit('run.end', move);
+            } else if (countableSteps) {
+              Glide.index += Math.min(length - Glide.index, -toInt(steps));
+            } else {
+              Glide.index++;
+            }
+            break;
+
+          case '<':
+            if (steps === '<') {
+              Glide.index = 0;
+            } else if (this.isStart()) {
+              if (!(Glide.isType('slider') && !Glide.settings.rewind)) {
+                this._o = true;
+
+                Glide.index = length;
+              }
+
+              Events.emit('run.start', move);
+            } else if (countableSteps) {
+              Glide.index -= Math.min(Glide.index, toInt(steps));
+            } else {
+              Glide.index--;
+            }
+            break;
+
+          case '=':
+            Glide.index = steps;
+            break;
+        }
+      },
+
+
+      /**
+       * Checks if we are on the first slide.
+       *
+       * @return {Boolean}
+       */
+      isStart: function isStart() {
+        return Glide.index === 0;
+      },
+
+
+      /**
+       * Checks if we are on the last slide.
+       *
+       * @return {Boolean}
+       */
+      isEnd: function isEnd() {
+        return Glide.index === this.length;
+      },
+
+
+      /**
+       * Checks if we are making a offset run.
+       *
+       * @param {String} direction
+       * @return {Boolean}
+       */
+      isOffset: function isOffset(direction) {
+        return this._o && this.move.direction === direction;
+      }
+    };
+
+    define(Run, 'move', {
+      /**
+       * Gets value of the move schema.
+       *
+       * @returns {Object}
+       */
+      get: function get() {
+        return this._m;
+      },
+
+
+      /**
+       * Sets value of the move schema.
+       *
+       * @returns {Object}
+       */
+      set: function set(value) {
+        this._m = {
+          direction: value.substr(0, 1),
+          steps: value.substr(1) ? value.substr(1) : 0
+        };
+      }
+    });
+
+    define(Run, 'length', {
+      /**
+       * Gets value of the running distance based
+       * on zero-indexing number of slides.
+       *
+       * @return {Number}
+       */
+      get: function get() {
+        var settings = Glide.settings;
+        var length = Components.Html.slides.length;
+
+        // While number of slides inside instance is smaller
+        // that `perView` settings we should't run at all.
+        // Running distance has to be zero.
+
+        if (settings.perView > length) {
+          return 0;
+        }
+
+        // If the `bound` option is acitve, a maximum running distance should be
+        // reduced by `perView` and `focusAt` settings. Running distance
+        // should end before creating an empty space after instance.
+        if (Glide.isType('slider') && settings.focusAt !== 'center' && settings.bound) {
+          return length - 1 - (toInt(settings.perView) - 1) + toInt(settings.focusAt);
+        }
+
+        return length - 1;
+      }
+    });
+
+    define(Run, 'offset', {
+      /**
+       * Gets status of the offsetting flag.
+       *
+       * @return {Boolean}
+       */
+      get: function get() {
+        return this._o;
+      }
+    });
+
+    return Run;
+  }
+
+  /**
+   * Returns a current time.
+   *
+   * @return {Number}
+   */
+  function now() {
+    return new Date().getTime();
+  }
+
+  /**
+   * Returns a function, that, when invoked, will only be triggered
+   * at most once during a given window of time.
+   *
+   * @param {Function} func
+   * @param {Number} wait
+   * @param {Object=} options
+   * @return {Function}
+   *
+   * @see https://github.com/jashkenas/underscore
+   */
+  function throttle(func, wait, options) {
+    var timeout = void 0,
+        context = void 0,
+        args = void 0,
+        result = void 0;
+    var previous = 0;
+    if (!options) options = {};
+
+    var later = function later() {
+      previous = options.leading === false ? 0 : now();
+      timeout = null;
+      result = func.apply(context, args);
+      if (!timeout) context = args = null;
+    };
+
+    var throttled = function throttled() {
+      var at = now();
+      if (!previous && options.leading === false) previous = at;
+      var remaining = wait - (at - previous);
+      context = this;
+      args = arguments;
+      if (remaining <= 0 || remaining > wait) {
+        if (timeout) {
+          clearTimeout(timeout);
+          timeout = null;
+        }
+        previous = at;
+        result = func.apply(context, args);
+        if (!timeout) context = args = null;
+      } else if (!timeout && options.trailing !== false) {
+        timeout = setTimeout(later, remaining);
+      }
+      return result;
+    };
+
+    throttled.cancel = function () {
+      clearTimeout(timeout);
+      previous = 0;
+      timeout = context = args = null;
+    };
+
+    return throttled;
+  }
+
+  var MARGIN_TYPE = {
+    ltr: ['marginLeft', 'marginRight'],
+    rtl: ['marginRight', 'marginLeft']
+  };
+
+  function Gaps (Glide, Components, Events) {
+    var Gaps = {
+      /**
+       * Setups gap value based on settings.
+       *
+       * @return {Void}
+       */
+      mount: function mount() {
+        this.value = Glide.settings.gap;
+      },
+
+
+      /**
+       * Applies gaps between slides. First and last
+       * slides do not receive it's edge margins.
+       *
+       * @param {HTMLCollection} slides
+       * @return {Void}
+       */
+      apply: function apply(slides) {
+        for (var i = 0, len = slides.length; i < len; i++) {
+          var style = slides[i].style;
+          var direction = Components.Direction.value;
+
+          if (i !== 0) {
+            style[MARGIN_TYPE[direction][0]] = this.value / 2 + 'px';
+          } else {
+            style[MARGIN_TYPE[direction][0]] = '';
+          }
+
+          if (i !== slides.length - 1) {
+            style[MARGIN_TYPE[direction][1]] = this.value / 2 + 'px';
+          } else {
+            style[MARGIN_TYPE[direction][1]] = '';
+          }
+        }
+      },
+
+
+      /**
+       * Removes gaps from the slides.
+       *
+       * @param {HTMLCollection} slides
+       * @returns {Void}
+      */
+      remove: function remove(slides) {
+        for (var i = 0, len = slides.length; i < len; i++) {
+          var style = slides[i].style;
+
+          style.marginLeft = '';
+          style.marginRight = '';
+        }
+      }
+    };
+
+    define(Gaps, 'value', {
+      /**
+       * Gets value of the gap.
+       *
+       * @returns {Number}
+       */
+      get: function get() {
+        return Gaps._v;
+      },
+
+
+      /**
+       * Sets value of the gap.
+       *
+       * @param {String} value
+       * @return {Void}
+       */
+      set: function set(value) {
+        Gaps._v = toInt(value);
+      }
+    });
+
+    define(Gaps, 'grow', {
+      /**
+       * Gets additional dimentions value caused by gaps.
+       * Used to increase width of the slides wrapper.
+       *
+       * @returns {Number}
+       */
+      get: function get() {
+        return Gaps.value * (Components.Sizes.length - 1);
+      }
+    });
+
+    define(Gaps, 'reductor', {
+      /**
+       * Gets reduction value caused by gaps.
+       * Used to subtract width of the slides.
+       *
+       * @returns {Number}
+       */
+      get: function get() {
+        var perView = Glide.settings.perView;
+
+        return Gaps.value * (perView - 1) / perView;
+      }
+    });
+
+    /**
+     * Remount component:
+     * - on updating via API, to update gap value
+     */
+    Events.on('update', function () {
+      Gaps.mount();
+    });
+
+    /**
+     * Apply calculated gaps:
+     * - after building, so slides (including clones) will receive proper margins
+     * - on updating via API, to recalculate gaps with new options
+     */
+    Events.on(['build.after', 'update'], throttle(function () {
+      Gaps.apply(Components.Html.wrapper.children);
+    }, 30));
+
+    /**
+     * Remove gaps:
+     * - on destroying to bring markup to its inital state
+     */
+    Events.on('destroy', function () {
+      Gaps.remove(Components.Html.wrapper.children);
+    });
+
+    return Gaps;
+  }
+
+  /**
+   * Finds siblings nodes of the passed node.
+   *
+   * @param  {Element} node
+   * @return {Array}
+   */
+  function siblings(node) {
+    if (node && node.parentNode) {
+      var n = node.parentNode.firstChild;
+      var matched = [];
+
+      for (; n; n = n.nextSibling) {
+        if (n.nodeType === 1 && n !== node) {
+          matched.push(n);
+        }
+      }
+
+      return matched;
+    }
+
+    return [];
+  }
+
+  /**
+   * Checks if passed node exist and is a valid element.
+   *
+   * @param  {Element} node
+   * @return {Boolean}
+   */
+  function exist(node) {
+    if (node && node instanceof window.HTMLElement) {
+      return true;
+    }
+
+    return false;
+  }
+
+  var TRACK_SELECTOR = '[data-glide-el="track"]';
+
+  function Html (Glide, Components) {
+    var Html = {
+      /**
+       * Setup slider HTML nodes.
+       *
+       * @param {Glide} glide
+       */
+      mount: function mount() {
+        this.root = Glide.selector;
+        this.track = this.root.querySelector(TRACK_SELECTOR);
+        this.slides = Array.prototype.slice.call(this.wrapper.children).filter(function (slide) {
+          return !slide.classList.contains(Glide.settings.classes.cloneSlide);
+        });
+      }
+    };
+
+    define(Html, 'root', {
+      /**
+       * Gets node of the glide main element.
+       *
+       * @return {Object}
+       */
+      get: function get() {
+        return Html._r;
+      },
+
+
+      /**
+       * Sets node of the glide main element.
+       *
+       * @return {Object}
+       */
+      set: function set(r) {
+        if (isString(r)) {
+          r = document.querySelector(r);
+        }
+
+        if (exist(r)) {
+          Html._r = r;
+        } else {
+          warn('Root element must be a existing Html node');
+        }
+      }
+    });
+
+    define(Html, 'track', {
+      /**
+       * Gets node of the glide track with slides.
+       *
+       * @return {Object}
+       */
+      get: function get() {
+        return Html._t;
+      },
+
+
+      /**
+       * Sets node of the glide track with slides.
+       *
+       * @return {Object}
+       */
+      set: function set(t) {
+        if (exist(t)) {
+          Html._t = t;
+        } else {
+          warn('Could not find track element. Please use ' + TRACK_SELECTOR + ' attribute.');
+        }
+      }
+    });
+
+    define(Html, 'wrapper', {
+      /**
+       * Gets node of the slides wrapper.
+       *
+       * @return {Object}
+       */
+      get: function get() {
+        return Html.track.children[0];
+      }
+    });
+
+    return Html;
+  }
+
+  function Peek (Glide, Components, Events) {
+    var Peek = {
+      /**
+       * Setups how much to peek based on settings.
+       *
+       * @return {Void}
+       */
+      mount: function mount() {
+        this.value = Glide.settings.peek;
+      }
+    };
+
+    define(Peek, 'value', {
+      /**
+       * Gets value of the peek.
+       *
+       * @returns {Number|Object}
+       */
+      get: function get() {
+        return Peek._v;
+      },
+
+
+      /**
+       * Sets value of the peek.
+       *
+       * @param {Number|Object} value
+       * @return {Void}
+       */
+      set: function set(value) {
+        if (isObject(value)) {
+          value.before = toInt(value.before);
+          value.after = toInt(value.after);
+        } else {
+          value = toInt(value);
+        }
+
+        Peek._v = value;
+      }
+    });
+
+    define(Peek, 'reductor', {
+      /**
+       * Gets reduction value caused by peek.
+       *
+       * @returns {Number}
+       */
+      get: function get() {
+        var value = Peek.value;
+        var perView = Glide.settings.perView;
+
+        if (isObject(value)) {
+          return value.before / perView + value.after / perView;
+        }
+
+        return value * 2 / perView;
+      }
+    });
+
+    /**
+     * Recalculate peeking sizes on:
+     * - when resizing window to update to proper percents
+     */
+    Events.on(['resize', 'update'], function () {
+      Peek.mount();
+    });
+
+    return Peek;
+  }
+
+  function Move (Glide, Components, Events) {
+    var Move = {
+      /**
+       * Constructs move component.
+       *
+       * @returns {Void}
+       */
+      mount: function mount() {
+        this._o = 0;
+      },
+
+
+      /**
+       * Calculates a movement value based on passed offset and currently active index.
+       *
+       * @param  {Number} offset
+       * @return {Void}
+       */
+      make: function make() {
+        var _this = this;
+
+        var offset = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 0;
+
+        this.offset = offset;
+
+        Events.emit('move', {
+          movement: this.value
+        });
+
+        Components.Transition.after(function () {
+          Events.emit('move.after', {
+            movement: _this.value
+          });
+        });
+      }
+    };
+
+    define(Move, 'offset', {
+      /**
+       * Gets an offset value used to modify current translate.
+       *
+       * @return {Object}
+       */
+      get: function get() {
+        return Move._o;
+      },
+
+
+      /**
+       * Sets an offset value used to modify current translate.
+       *
+       * @return {Object}
+       */
+      set: function set(value) {
+        Move._o = !isUndefined(value) ? toInt(value) : 0;
+      }
+    });
+
+    define(Move, 'translate', {
+      /**
+       * Gets a raw movement value.
+       *
+       * @return {Number}
+       */
+      get: function get() {
+        return Components.Sizes.slideWidth * Glide.index;
+      }
+    });
+
+    define(Move, 'value', {
+      /**
+       * Gets an actual movement value corrected by offset.
+       *
+       * @return {Number}
+       */
+      get: function get() {
+        var offset = this.offset;
+        var translate = this.translate;
+
+        if (Components.Direction.is('rtl')) {
+          return translate + offset;
+        }
+
+        return translate - offset;
+      }
+    });
+
+    /**
+     * Make movement to proper slide on:
+     * - before build, so glide will start at `startAt` index
+     * - on each standard run to move to newly calculated index
+     */
+    Events.on(['build.before', 'run'], function () {
+      Move.make();
+    });
+
+    return Move;
+  }
+
+  function Sizes (Glide, Components, Events) {
+    var Sizes = {
+      /**
+       * Setups dimentions of slides.
+       *
+       * @return {Void}
+       */
+      setupSlides: function setupSlides() {
+        var slides = Components.Html.slides;
+
+        for (var i = 0; i < slides.length; i++) {
+          slides[i].style.width = this.slideWidth + 'px';
+        }
+      },
+
+
+      /**
+       * Setups dimentions of slides wrapper.
+       *
+       * @return {Void}
+       */
+      setupWrapper: function setupWrapper(dimention) {
+        Components.Html.wrapper.style.width = this.wrapperSize + 'px';
+      },
+
+
+      /**
+       * Removes applied styles from HTML elements.
+       *
+       * @returns {Void}
+       */
+      remove: function remove() {
+        var slides = Components.Html.slides;
+
+        for (var i = 0; i < slides.length; i++) {
+          slides[i].style.width = '';
+        }
+
+        Components.Html.wrapper.style.width = '';
+      }
+    };
+
+    define(Sizes, 'length', {
+      /**
+       * Gets count number of the slides.
+       *
+       * @return {Number}
+       */
+      get: function get() {
+        return Components.Html.slides.length;
+      }
+    });
+
+    define(Sizes, 'width', {
+      /**
+       * Gets width value of the glide.
+       *
+       * @return {Number}
+       */
+      get: function get() {
+        return Components.Html.root.offsetWidth;
+      }
+    });
+
+    define(Sizes, 'wrapperSize', {
+      /**
+       * Gets size of the slides wrapper.
+       *
+       * @return {Number}
+       */
+      get: function get() {
+        return Sizes.slideWidth * Sizes.length + Components.Gaps.grow + Components.Clones.grow;
+      }
+    });
+
+    define(Sizes, 'slideWidth', {
+      /**
+       * Gets width value of the single slide.
+       *
+       * @return {Number}
+       */
+      get: function get() {
+        return Sizes.width / Glide.settings.perView - Components.Peek.reductor - Components.Gaps.reductor;
+      }
+    });
+
+    /**
+     * Apply calculated glide's dimensions:
+     * - before building, so other dimentions (e.g. translate) will be calculated propertly
+     * - when resizing window to recalculate sildes dimensions
+     * - on updating via API, to calculate dimensions based on new options
+     */
+    Events.on(['build.before', 'resize', 'update'], function () {
+      Sizes.setupSlides();
+      Sizes.setupWrapper();
+    });
+
+    /**
+     * Remove calculated glide's dimensions:
+     * - on destoting to bring markup to its inital state
+     */
+    Events.on('destroy', function () {
+      Sizes.remove();
+    });
+
+    return Sizes;
+  }
+
+  function Build (Glide, Components, Events) {
+    var Build = {
+      /**
+       * Init glide building. Adds classes, sets
+       * dimensions and setups initial state.
+       *
+       * @return {Void}
+       */
+      mount: function mount() {
+        Events.emit('build.before');
+
+        this.typeClass();
+        this.activeClass();
+
+        Events.emit('build.after');
+      },
+
+
+      /**
+       * Adds `type` class to the glide element.
+       *
+       * @return {Void}
+       */
+      typeClass: function typeClass() {
+        Components.Html.root.classList.add(Glide.settings.classes[Glide.settings.type]);
+      },
+
+
+      /**
+       * Sets active class to current slide.
+       *
+       * @return {Void}
+       */
+      activeClass: function activeClass() {
+        var classes = Glide.settings.classes;
+        var slide = Components.Html.slides[Glide.index];
+
+        if (slide) {
+          slide.classList.add(classes.activeSlide);
+
+          siblings(slide).forEach(function (sibling) {
+            sibling.classList.remove(classes.activeSlide);
+          });
+        }
+      },
+
+
+      /**
+       * Removes HTML classes applied at building.
+       *
+       * @return {Void}
+       */
+      removeClasses: function removeClasses() {
+        var classes = Glide.settings.classes;
+
+        Components.Html.root.classList.remove(classes[Glide.settings.type]);
+
+        Components.Html.slides.forEach(function (sibling) {
+          sibling.classList.remove(classes.activeSlide);
+        });
+      }
+    };
+
+    /**
+     * Clear building classes:
+     * - on destroying to bring HTML to its initial state
+     * - on updating to remove classes before remounting component
+     */
+    Events.on(['destroy', 'update'], function () {
+      Build.removeClasses();
+    });
+
+    /**
+     * Remount component:
+     * - on resizing of the window to calculate new dimentions
+     * - on updating settings via API
+     */
+    Events.on(['resize', 'update'], function () {
+      Build.mount();
+    });
+
+    /**
+     * Swap active class of current slide:
+     * - after each move to the new index
+     */
+    Events.on('move.after', function () {
+      Build.activeClass();
+    });
+
+    return Build;
+  }
+
+  function Clones (Glide, Components, Events) {
+    var Clones = {
+      /**
+       * Create pattern map and collect slides to be cloned.
+       */
+      mount: function mount() {
+        this.items = [];
+
+        if (Glide.isType('carousel')) {
+          this.items = this.collect();
+        }
+      },
+
+
+      /**
+       * Collect clones with pattern.
+       *
+       * @return {Void}
+       */
+      collect: function collect() {
+        var items = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : [];
+        var slides = Components.Html.slides;
+        var _Glide$settings = Glide.settings,
+            perView = _Glide$settings.perView,
+            classes = _Glide$settings.classes;
+
+
+        var start = slides.slice(0, perView);
+        var end = slides.slice(-perView);
+
+        for (var r = 0; r < Math.max(1, Math.floor(perView / slides.length)); r++) {
+          for (var i = 0; i < start.length; i++) {
+            var clone = start[i].cloneNode(true);
+
+            clone.classList.add(classes.cloneSlide);
+
+            items.push(clone);
+          }
+
+          for (var _i = 0; _i < end.length; _i++) {
+            var _clone = end[_i].cloneNode(true);
+
+            _clone.classList.add(classes.cloneSlide);
+
+            items.unshift(_clone);
+          }
+        }
+
+        return items;
+      },
+
+
+      /**
+       * Append cloned slides with generated pattern.
+       *
+       * @return {Void}
+       */
+      append: function append() {
+        var items = this.items;
+        var _Components$Html = Components.Html,
+            wrapper = _Components$Html.wrapper,
+            slides = _Components$Html.slides;
+
+
+        var half = Math.floor(items.length / 2);
+        var prepend = items.slice(0, half).reverse();
+        var append = items.slice(half, items.length);
+
+        for (var i = 0; i < append.length; i++) {
+          wrapper.appendChild(append[i]);
+        }
+
+        for (var _i2 = 0; _i2 < prepend.length; _i2++) {
+          wrapper.insertBefore(prepend[_i2], slides[0]);
+        }
+
+        for (var _i3 = 0; _i3 < items.length; _i3++) {
+          items[_i3].style.width = Components.Sizes.slideWidth + 'px';
+        }
+      },
+
+
+      /**
+       * Remove all cloned slides.
+       *
+       * @return {Void}
+       */
+      remove: function remove() {
+        var items = this.items;
+
+
+        for (var i = 0; i < items.length; i++) {
+          Components.Html.wrapper.removeChild(items[i]);
+        }
+      }
+    };
+
+    define(Clones, 'grow', {
+      /**
+       * Gets additional dimentions value caused by clones.
+       *
+       * @return {Number}
+       */
+      get: function get() {
+        return (Components.Sizes.slideWidth + Components.Gaps.value) * Clones.items.length;
+      }
+    });
+
+    /**
+     * Append additional slide's clones:
+     * - while glide's type is `carousel`
+     */
+    Events.on('update', function () {
+      Clones.remove();
+      Clones.mount();
+      Clones.append();
+    });
+
+    /**
+     * Append additional slide's clones:
+     * - while glide's type is `carousel`
+     */
+    Events.on('build.before', function () {
+      if (Glide.isType('carousel')) {
+        Clones.append();
+      }
+    });
+
+    /**
+     * Remove clones HTMLElements:
+     * - on destroying, to bring HTML to its initial state
+     */
+    Events.on('destroy', function () {
+      Clones.remove();
+    });
+
+    return Clones;
+  }
+
+  var EventsBinder = function () {
+    /**
+     * Construct a EventsBinder instance.
+     */
+    function EventsBinder() {
+      var listeners = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+      classCallCheck(this, EventsBinder);
+
+      this.listeners = listeners;
+    }
+
+    /**
+     * Adds events listeners to arrows HTML elements.
+     *
+     * @param  {String|Array} events
+     * @param  {Element|Window|Document} el
+     * @param  {Function} closure
+     * @return {Void}
+     */
+
+
+    createClass(EventsBinder, [{
+      key: 'on',
+      value: function on(events, el, closure) {
+        var capture = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : false;
+
+        if (isString(events)) {
+          events = [events];
+        }
+
+        for (var i = 0; i < events.length; i++) {
+          this.listeners[events[i]] = closure;
+
+          el.addEventListener(events[i], this.listeners[events[i]], capture);
+        }
+      }
+
+      /**
+       * Removes event listeners from arrows HTML elements.
+       *
+       * @param  {String|Array} events
+       * @param  {Element|Window|Document} el
+       * @return {Void}
+       */
+
+    }, {
+      key: 'off',
+      value: function off(events, el) {
+        if (isString(events)) {
+          events = [events];
+        }
+
+        for (var i = 0; i < events.length; i++) {
+          el.removeEventListener(events[i], this.listeners[events[i]], false);
+        }
+      }
+
+      /**
+       * Destroy collected listeners.
+       *
+       * @returns {Void}
+       */
+
+    }, {
+      key: 'destroy',
+      value: function destroy() {
+        delete this.listeners;
+      }
+    }]);
+    return EventsBinder;
+  }();
+
+  function Resize (Glide, Components, Events) {
+    /**
+     * Instance of the binder for DOM Events.
+     *
+     * @type {EventsBinder}
+     */
+    var Binder = new EventsBinder();
+
+    var Resize = {
+      /**
+       * Initializes window bindings.
+       */
+      mount: function mount() {
+        this.bind();
+      },
+
+
+      /**
+       * Binds `rezsize` listener to the window.
+       * It's a costly event, so we are debouncing it.
+       *
+       * @return {Void}
+       */
+      bind: function bind() {
+        Binder.on('resize', window, throttle(function () {
+          Events.emit('resize');
+        }, Glide.settings.throttle));
+      },
+
+
+      /**
+       * Unbinds listeners from the window.
+       *
+       * @return {Void}
+       */
+      unbind: function unbind() {
+        Binder.off('resize', window);
+      }
+    };
+
+    /**
+     * Remove bindings from window:
+     * - on destroying, to remove added EventListener
+     */
+    Events.on('destroy', function () {
+      Resize.unbind();
+      Binder.destroy();
+    });
+
+    return Resize;
+  }
+
+  var VALID_DIRECTIONS = ['ltr', 'rtl'];
+  var FLIPED_MOVEMENTS = {
+    '>': '<',
+    '<': '>',
+    '=': '='
+  };
+
+  function Direction (Glide, Components, Events) {
+    var Direction = {
+      /**
+       * Setups gap value based on settings.
+       *
+       * @return {Void}
+       */
+      mount: function mount() {
+        this.value = Glide.settings.direction;
+      },
+
+
+      /**
+       * Resolves pattern based on direction value
+       *
+       * @param {String} pattern
+       * @returns {String}
+       */
+      resolve: function resolve(pattern) {
+        var token = pattern.slice(0, 1);
+
+        if (this.is('rtl')) {
+          return pattern.split(token).join(FLIPED_MOVEMENTS[token]);
+        }
+
+        return pattern;
+      },
+
+
+      /**
+       * Checks value of direction mode.
+       *
+       * @param {String} direction
+       * @returns {Boolean}
+       */
+      is: function is(direction) {
+        return this.value === direction;
+      },
+
+
+      /**
+       * Applies direction class to the root HTML element.
+       *
+       * @return {Void}
+       */
+      addClass: function addClass() {
+        Components.Html.root.classList.add(Glide.settings.classes.direction[this.value]);
+      },
+
+
+      /**
+       * Removes direction class from the root HTML element.
+       *
+       * @return {Void}
+       */
+      removeClass: function removeClass() {
+        Components.Html.root.classList.remove(Glide.settings.classes.direction[this.value]);
+      }
+    };
+
+    define(Direction, 'value', {
+      /**
+       * Gets value of the direction.
+       *
+       * @returns {Number}
+       */
+      get: function get() {
+        return Direction._v;
+      },
+
+
+      /**
+       * Sets value of the direction.
+       *
+       * @param {String} value
+       * @return {Void}
+       */
+      set: function set(value) {
+        if (VALID_DIRECTIONS.indexOf(value) > -1) {
+          Direction._v = value;
+        } else {
+          warn('Direction value must be `ltr` or `rtl`');
+        }
+      }
+    });
+
+    /**
+     * Clear direction class:
+     * - on destroy to bring HTML to its initial state
+     * - on update to remove class before reappling bellow
+     */
+    Events.on(['destroy', 'update'], function () {
+      Direction.removeClass();
+    });
+
+    /**
+     * Remount component:
+     * - on update to reflect changes in direction value
+     */
+    Events.on('update', function () {
+      Direction.mount();
+    });
+
+    /**
+     * Apply direction class:
+     * - before building to apply class for the first time
+     * - on updating to reapply direction class that may changed
+     */
+    Events.on(['build.before', 'update'], function () {
+      Direction.addClass();
+    });
+
+    return Direction;
+  }
+
+  /**
+   * Reflects value of glide movement.
+   *
+   * @param  {Object} Glide
+   * @param  {Object} Components
+   * @return {Object}
+   */
+  function Rtl (Glide, Components) {
+    return {
+      /**
+       * Negates the passed translate if glide is in RTL option.
+       *
+       * @param  {Number} translate
+       * @return {Number}
+       */
+      modify: function modify(translate) {
+        if (Components.Direction.is('rtl')) {
+          return -translate;
+        }
+
+        return translate;
+      }
+    };
+  }
+
+  /**
+   * Updates glide movement with a `gap` settings.
+   *
+   * @param  {Object} Glide
+   * @param  {Object} Components
+   * @return {Object}
+   */
+  function Gap (Glide, Components) {
+    return {
+      /**
+       * Modifies passed translate value with number in the `gap` settings.
+       *
+       * @param  {Number} translate
+       * @return {Number}
+       */
+      modify: function modify(translate) {
+        return translate + Components.Gaps.value * Glide.index;
+      }
+    };
+  }
+
+  /**
+   * Updates glide movement with width of additional clones width.
+   *
+   * @param  {Object} Glide
+   * @param  {Object} Components
+   * @return {Object}
+   */
+  function Grow (Glide, Components) {
+    return {
+      /**
+       * Adds to the passed translate width of the half of clones.
+       *
+       * @param  {Number} translate
+       * @return {Number}
+       */
+      modify: function modify(translate) {
+        return translate + Components.Clones.grow / 2;
+      }
+    };
+  }
+
+  /**
+   * Updates glide movement with a `peek` settings.
+   *
+   * @param  {Object} Glide
+   * @param  {Object} Components
+   * @return {Object}
+   */
+  function Peeking (Glide, Components) {
+    return {
+      /**
+       * Modifies passed translate value with a `peek` setting.
+       *
+       * @param  {Number} translate
+       * @return {Number}
+       */
+      modify: function modify(translate) {
+        if (Glide.settings.focusAt >= 0) {
+          var peek = Components.Peek.value;
+
+          if (isObject(peek)) {
+            return translate - peek.before;
+          }
+
+          return translate - peek;
+        }
+
+        return translate;
+      }
+    };
+  }
+
+  /**
+   * Updates glide movement with a `focusAt` settings.
+   *
+   * @param  {Object} Glide
+   * @param  {Object} Components
+   * @return {Object}
+   */
+  function Focusing (Glide, Components) {
+    return {
+      /**
+       * Modifies passed translate value with index in the `focusAt` setting.
+       *
+       * @param  {Number} translate
+       * @return {Number}
+       */
+      modify: function modify(translate) {
+        var gap = Components.Gaps.value;
+        var width = Components.Sizes.width;
+        var focusAt = Glide.settings.focusAt;
+        var slideWidth = Components.Sizes.slideWidth;
+
+        if (focusAt === 'center') {
+          return translate - (width / 2 - slideWidth / 2);
+        }
+
+        return translate - slideWidth * focusAt - gap * focusAt;
+      }
+    };
+  }
+
+  /**
+   * Applies diffrent transformers on translate value.
+   *
+   * @param  {Object} Glide
+   * @param  {Object} Components
+   * @return {Object}
+   */
+  function mutator (Glide, Components, Events) {
+    /**
+     * Merge instance transformers with collection of default transformers.
+     * It's important that the Rtl component be last on the list,
+     * so it reflects all previous transformations.
+     *
+     * @type {Array}
+     */
+    var TRANSFORMERS = [Gap, Grow, Peeking, Focusing].concat(Glide._t, [Rtl]);
+
+    return {
+      /**
+       * Piplines translate value with registered transformers.
+       *
+       * @param  {Number} translate
+       * @return {Number}
+       */
+      mutate: function mutate(translate) {
+        for (var i = 0; i < TRANSFORMERS.length; i++) {
+          var transformer = TRANSFORMERS[i];
+
+          if (isFunction(transformer) && isFunction(transformer().modify)) {
+            translate = transformer(Glide, Components, Events).modify(translate);
+          } else {
+            warn('Transformer should be a function that returns an object with `modify()` method');
+          }
+        }
+
+        return translate;
+      }
+    };
+  }
+
+  function Translate (Glide, Components, Events) {
+    var Translate = {
+      /**
+       * Sets value of translate on HTML element.
+       *
+       * @param {Number} value
+       * @return {Void}
+       */
+      set: function set(value) {
+        var transform = mutator(Glide, Components).mutate(value);
+
+        Components.Html.wrapper.style.transform = 'translate3d(' + -1 * transform + 'px, 0px, 0px)';
+      },
+
+
+      /**
+       * Removes value of translate from HTML element.
+       *
+       * @return {Void}
+       */
+      remove: function remove() {
+        Components.Html.wrapper.style.transform = '';
+      }
+    };
+
+    /**
+     * Set new translate value:
+     * - on move to reflect index change
+     * - on updating via API to reflect possible changes in options
+     */
+    Events.on('move', function (context) {
+      var gap = Components.Gaps.value;
+      var length = Components.Sizes.length;
+      var width = Components.Sizes.slideWidth;
+
+      if (Glide.isType('carousel') && Components.Run.isOffset('<')) {
+        Components.Transition.after(function () {
+          Events.emit('translate.jump');
+
+          Translate.set(width * (length - 1));
+        });
+
+        return Translate.set(-width - gap * length);
+      }
+
+      if (Glide.isType('carousel') && Components.Run.isOffset('>')) {
+        Components.Transition.after(function () {
+          Events.emit('translate.jump');
+
+          Translate.set(0);
+        });
+
+        return Translate.set(width * length + gap * length);
+      }
+
+      return Translate.set(context.movement);
+    });
+
+    /**
+     * Remove translate:
+     * - on destroying to bring markup to its inital state
+     */
+    Events.on('destroy', function () {
+      Translate.remove();
+    });
+
+    return Translate;
+  }
+
+  function Transition (Glide, Components, Events) {
+    /**
+     * Holds inactivity status of transition.
+     * When true transition is not applied.
+     *
+     * @type {Boolean}
+     */
+    var disabled = false;
+
+    var Transition = {
+      /**
+       * Composes string of the CSS transition.
+       *
+       * @param {String} property
+       * @return {String}
+       */
+      compose: function compose(property) {
+        var settings = Glide.settings;
+
+        if (!disabled) {
+          return property + ' ' + this.duration + 'ms ' + settings.animationTimingFunc;
+        }
+
+        return property + ' 0ms ' + settings.animationTimingFunc;
+      },
+
+
+      /**
+       * Sets value of transition on HTML element.
+       *
+       * @param {String=} property
+       * @return {Void}
+       */
+      set: function set() {
+        var property = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 'transform';
+
+        Components.Html.wrapper.style.transition = this.compose(property);
+      },
+
+
+      /**
+       * Removes value of transition from HTML element.
+       *
+       * @return {Void}
+       */
+      remove: function remove() {
+        Components.Html.wrapper.style.transition = '';
+      },
+
+
+      /**
+       * Runs callback after animation.
+       *
+       * @param  {Function} callback
+       * @return {Void}
+       */
+      after: function after(callback) {
+        setTimeout(function () {
+          callback();
+        }, this.duration);
+      },
+
+
+      /**
+       * Enable transition.
+       *
+       * @return {Void}
+       */
+      enable: function enable() {
+        disabled = false;
+
+        this.set();
+      },
+
+
+      /**
+       * Disable transition.
+       *
+       * @return {Void}
+       */
+      disable: function disable() {
+        disabled = true;
+
+        this.set();
+      }
+    };
+
+    define(Transition, 'duration', {
+      /**
+       * Gets duration of the transition based
+       * on currently running animation type.
+       *
+       * @return {Number}
+       */
+      get: function get() {
+        var settings = Glide.settings;
+
+        if (Glide.isType('slider') && Components.Run.offset) {
+          return settings.rewindDuration;
+        }
+
+        return settings.animationDuration;
+      }
+    });
+
+    /**
+     * Set transition `style` value:
+     * - on each moving, because it may be cleared by offset move
+     */
+    Events.on('move', function () {
+      Transition.set();
+    });
+
+    /**
+     * Disable transition:
+     * - before initial build to avoid transitioning from `0` to `startAt` index
+     * - while resizing window and recalculating dimentions
+     * - on jumping from offset transition at start and end edges in `carousel` type
+     */
+    Events.on(['build.before', 'resize', 'translate.jump'], function () {
+      Transition.disable();
+    });
+
+    /**
+     * Enable transition:
+     * - on each running, because it may be disabled by offset move
+     */
+    Events.on('run', function () {
+      Transition.enable();
+    });
+
+    /**
+     * Remove transition:
+     * - on destroying to bring markup to its inital state
+     */
+    Events.on('destroy', function () {
+      Transition.remove();
+    });
+
+    return Transition;
+  }
+
+  var START_EVENTS = ['touchstart', 'mousedown'];
+  var MOVE_EVENTS = ['touchmove', 'mousemove'];
+  var END_EVENTS = ['touchend', 'touchcancel', 'mouseup', 'mouseleave'];
+  var MOUSE_EVENTS = ['mousedown', 'mousemove', 'mouseup', 'mouseleave'];
+
+  function Swipe (Glide, Components, Events) {
+    /**
+     * Instance of the binder for DOM Events.
+     *
+     * @type {EventsBinder}
+     */
+    var Binder = new EventsBinder();
+
+    var swipeSin = 0;
+    var swipeStartX = 0;
+    var swipeStartY = 0;
+    var disabled = false;
+
+    var Swipe = {
+      /**
+       * Initializes swipe bindings.
+       *
+       * @return {Void}
+       */
+      mount: function mount() {
+        this.bindSwipeStart();
+      },
+
+
+      /**
+       * Handler for `swipestart` event. Calculates entry points of the user's tap.
+       *
+       * @param {Object} event
+       * @return {Void}
+       */
+      start: function start(event) {
+        if (!disabled && !Glide.disabled) {
+          this.disable();
+
+          var swipe = this.touches(event);
+
+          swipeSin = null;
+          swipeStartX = toInt(swipe.pageX);
+          swipeStartY = toInt(swipe.pageY);
+
+          this.bindSwipeMove();
+          this.bindSwipeEnd();
+
+          Events.emit('swipe.start');
+        }
+      },
+
+
+      /**
+       * Handler for `swipemove` event. Calculates user's tap angle and distance.
+       *
+       * @param {Object} event
+       */
+      move: function move(event) {
+        if (!Glide.disabled) {
+          var _Glide$settings = Glide.settings,
+              touchAngle = _Glide$settings.touchAngle,
+              touchRatio = _Glide$settings.touchRatio,
+              classes = _Glide$settings.classes;
+
+
+          var swipe = this.touches(event);
+
+          var subExSx = toInt(swipe.pageX) - swipeStartX;
+          var subEySy = toInt(swipe.pageY) - swipeStartY;
+          var powEX = Math.abs(subExSx << 2);
+          var powEY = Math.abs(subEySy << 2);
+          var swipeHypotenuse = (powEX + powEY) * (powEX + powEY);
+          var swipeCathetus = powEY * powEY;
+
+          swipeSin = Math.asin(swipeCathetus / swipeHypotenuse);
+
+          Components.Move.make(subExSx * toFloat(touchRatio));
+
+          if (swipeSin * 180 / Math.PI < touchAngle) {
+            event.stopPropagation();
+
+            Components.Html.root.classList.add(classes.dragging);
+
+            Events.emit('swipe.move');
+          } else {
+            return false;
+          }
+        }
+      },
+
+
+      /**
+       * Handler for `swipeend` event. Finitializes user's tap and decides about glide move.
+       *
+       * @param {Object} event
+       * @return {Void}
+       */
+      end: function end(event) {
+        if (!Glide.disabled) {
+          var settings = Glide.settings;
+
+          var swipe = this.touches(event);
+          var threshold = this.threshold(event);
+
+          var swipeDistance = swipe.pageX - swipeStartX;
+          var swipeDeg = swipeSin * 180 / Math.PI;
+          var steps = Math.round(swipeDistance / Components.Sizes.slideWidth);
+
+          this.enable();
+
+          if (swipeDistance > threshold && swipeDeg < settings.touchAngle) {
+            // While swipe is positive and greater than threshold move backward.
+            if (settings.perTouch) {
+              steps = Math.min(steps, toInt(settings.perTouch));
+            }
+
+            if (Components.Direction.is('rtl')) {
+              steps = -steps;
+            }
+
+            Components.Run.make(Components.Direction.resolve('<' + steps));
+          } else if (swipeDistance < -threshold && swipeDeg < settings.touchAngle) {
+            // While swipe is negative and lower than negative threshold move forward.
+            if (settings.perTouch) {
+              steps = Math.max(steps, -toInt(settings.perTouch));
+            }
+
+            if (Components.Direction.is('rtl')) {
+              steps = -steps;
+            }
+
+            Components.Run.make(Components.Direction.resolve('>' + steps));
+          } else {
+            // While swipe don't reach distance apply previous transform.
+            Components.Move.make();
+          }
+
+          Components.Html.root.classList.remove(settings.classes.dragging);
+
+          this.unbindSwipeMove();
+          this.unbindSwipeEnd();
+
+          Events.emit('swipe.end');
+        }
+      },
+
+
+      /**
+       * Binds swipe's starting event.
+       *
+       * @return {Void}
+       */
+      bindSwipeStart: function bindSwipeStart() {
+        var _this = this;
+
+        var settings = Glide.settings;
+
+        if (settings.swipeThreshold) {
+          Binder.on(START_EVENTS[0], Components.Html.wrapper, function (event) {
+            _this.start(event);
+          }, { passive: true });
+        }
+
+        if (settings.dragThreshold) {
+          Binder.on(START_EVENTS[1], Components.Html.wrapper, function (event) {
+            _this.start(event);
+          });
+        }
+      },
+
+
+      /**
+       * Unbinds swipe's starting event.
+       *
+       * @return {Void}
+       */
+      unbindSwipeStart: function unbindSwipeStart() {
+        Binder.off(START_EVENTS[0], Components.Html.wrapper);
+        Binder.off(START_EVENTS[1], Components.Html.wrapper);
+      },
+
+
+      /**
+       * Binds swipe's moving event.
+       *
+       * @return {Void}
+       */
+      bindSwipeMove: function bindSwipeMove() {
+        var _this2 = this;
+
+        Binder.on(MOVE_EVENTS, Components.Html.wrapper, throttle(function (event) {
+          _this2.move(event);
+        }, Glide.settings.throttle), { passive: true });
+      },
+
+
+      /**
+       * Unbinds swipe's moving event.
+       *
+       * @return {Void}
+       */
+      unbindSwipeMove: function unbindSwipeMove() {
+        Binder.off(MOVE_EVENTS, Components.Html.wrapper);
+      },
+
+
+      /**
+       * Binds swipe's ending event.
+       *
+       * @return {Void}
+       */
+      bindSwipeEnd: function bindSwipeEnd() {
+        var _this3 = this;
+
+        Binder.on(END_EVENTS, Components.Html.wrapper, function (event) {
+          _this3.end(event);
+        });
+      },
+
+
+      /**
+       * Unbinds swipe's ending event.
+       *
+       * @return {Void}
+       */
+      unbindSwipeEnd: function unbindSwipeEnd() {
+        Binder.off(END_EVENTS, Components.Html.wrapper);
+      },
+
+
+      /**
+       * Normalizes event touches points accorting to different types.
+       *
+       * @param {Object} event
+       */
+      touches: function touches(event) {
+        if (MOUSE_EVENTS.indexOf(event.type) > -1) {
+          return event;
+        }
+
+        return event.touches[0] || event.changedTouches[0];
+      },
+
+
+      /**
+       * Gets value of minimum swipe distance settings based on event type.
+       *
+       * @return {Number}
+       */
+      threshold: function threshold(event) {
+        var settings = Glide.settings;
+
+        if (MOUSE_EVENTS.indexOf(event.type) > -1) {
+          return settings.dragThreshold;
+        }
+
+        return settings.swipeThreshold;
+      },
+
+
+      /**
+       * Enables swipe event.
+       *
+       * @return {self}
+       */
+      enable: function enable() {
+        disabled = false;
+
+        Components.Transition.enable();
+
+        return this;
+      },
+
+
+      /**
+       * Disables swipe event.
+       *
+       * @return {self}
+       */
+      disable: function disable() {
+        disabled = true;
+
+        Components.Transition.disable();
+
+        return this;
+      }
+    };
+
+    /**
+     * Add component class:
+     * - after initial building
+     */
+    Events.on('build.after', function () {
+      Components.Html.root.classList.add(Glide.settings.classes.swipeable);
+    });
+
+    /**
+     * Remove swiping bindings:
+     * - on destroying, to remove added EventListeners
+     */
+    Events.on('destroy', function () {
+      Swipe.unbindSwipeStart();
+      Swipe.unbindSwipeMove();
+      Swipe.unbindSwipeEnd();
+      Binder.destroy();
+    });
+
+    return Swipe;
+  }
+
+  function Images (Glide, Components, Events) {
+    /**
+     * Instance of the binder for DOM Events.
+     *
+     * @type {EventsBinder}
+     */
+    var Binder = new EventsBinder();
+
+    var Images = {
+      /**
+       * Binds listener to glide wrapper.
+       *
+       * @return {Void}
+       */
+      mount: function mount() {
+        this.bind();
+      },
+
+
+      /**
+       * Binds `dragstart` event on wrapper to prevent dragging images.
+       *
+       * @return {Void}
+       */
+      bind: function bind() {
+        Binder.on('dragstart', Components.Html.wrapper, this.dragstart);
+      },
+
+
+      /**
+       * Unbinds `dragstart` event on wrapper.
+       *
+       * @return {Void}
+       */
+      unbind: function unbind() {
+        Binder.off('dragstart', Components.Html.wrapper);
+      },
+
+
+      /**
+       * Event handler. Prevents dragging.
+       *
+       * @return {Void}
+       */
+      dragstart: function dragstart(event) {
+        event.preventDefault();
+      }
+    };
+
+    /**
+     * Remove bindings from images:
+     * - on destroying, to remove added EventListeners
+     */
+    Events.on('destroy', function () {
+      Images.unbind();
+      Binder.destroy();
+    });
+
+    return Images;
+  }
+
+  function Anchors (Glide, Components, Events) {
+    /**
+     * Instance of the binder for DOM Events.
+     *
+     * @type {EventsBinder}
+     */
+    var Binder = new EventsBinder();
+
+    /**
+     * Holds detaching status of anchors.
+     * Prevents detaching of already detached anchors.
+     *
+     * @private
+     * @type {Boolean}
+     */
+    var detached = false;
+
+    /**
+     * Holds preventing status of anchors.
+     * If `true` redirection after click will be disabled.
+     *
+     * @private
+     * @type {Boolean}
+     */
+    var prevented = false;
+
+    var Anchors = {
+      /**
+       * Setups a initial state of anchors component.
+       *
+       * @returns {Void}
+       */
+      mount: function mount() {
+        /**
+         * Holds collection of anchors elements.
+         *
+         * @private
+         * @type {HTMLCollection}
+         */
+        this._a = Components.Html.wrapper.querySelectorAll('a');
+
+        this.bind();
+      },
+
+
+      /**
+       * Binds events to anchors inside a track.
+       *
+       * @return {Void}
+       */
+      bind: function bind() {
+        Binder.on('click', Components.Html.wrapper, this.click);
+      },
+
+
+      /**
+       * Unbinds events attached to anchors inside a track.
+       *
+       * @return {Void}
+       */
+      unbind: function unbind() {
+        Binder.off('click', Components.Html.wrapper);
+      },
+
+
+      /**
+       * Handler for click event. Prevents clicks when glide is in `prevent` status.
+       *
+       * @param  {Object} event
+       * @return {Void}
+       */
+      click: function click(event) {
+        event.stopPropagation();
+
+        if (prevented) {
+          event.preventDefault();
+        }
+      },
+
+
+      /**
+       * Detaches anchors click event inside glide.
+       *
+       * @return {self}
+       */
+      detach: function detach() {
+        prevented = true;
+
+        if (!detached) {
+          for (var i = 0; i < this.items.length; i++) {
+            this.items[i].draggable = false;
+
+            this.items[i].setAttribute('data-href', this.items[i].getAttribute('href'));
+
+            this.items[i].removeAttribute('href');
+          }
+
+          detached = true;
+        }
+
+        return this;
+      },
+
+
+      /**
+       * Attaches anchors click events inside glide.
+       *
+       * @return {self}
+       */
+      attach: function attach() {
+        prevented = false;
+
+        if (detached) {
+          for (var i = 0; i < this.items.length; i++) {
+            this.items[i].draggable = true;
+
+            this.items[i].setAttribute('href', this.items[i].getAttribute('data-href'));
+          }
+
+          detached = false;
+        }
+
+        return this;
+      }
+    };
+
+    define(Anchors, 'items', {
+      /**
+       * Gets collection of the arrows HTML elements.
+       *
+       * @return {HTMLElement[]}
+       */
+      get: function get() {
+        return Anchors._a;
+      }
+    });
+
+    /**
+     * Detach anchors inside slides:
+     * - on swiping, so they won't redirect to its `href` attributes
+     */
+    Events.on('swipe.move', function () {
+      Anchors.detach();
+    });
+
+    /**
+     * Attach anchors inside slides:
+     * - after swiping and transitions ends, so they can redirect after click again
+     */
+    Events.on('swipe.end', function () {
+      Components.Transition.after(function () {
+        Anchors.attach();
+      });
+    });
+
+    /**
+     * Unbind anchors inside slides:
+     * - on destroying, to bring anchors to its initial state
+     */
+    Events.on('destroy', function () {
+      Anchors.attach();
+      Anchors.unbind();
+      Binder.destroy();
+    });
+
+    return Anchors;
+  }
+
+  var NAV_SELECTOR = '[data-glide-el="controls[nav]"]';
+  var CONTROLS_SELECTOR = '[data-glide-el^="controls"]';
+
+  function Controls (Glide, Components, Events) {
+    /**
+     * Instance of the binder for DOM Events.
+     *
+     * @type {EventsBinder}
+     */
+    var Binder = new EventsBinder();
+
+    var Controls = {
+      /**
+       * Inits arrows. Binds events listeners
+       * to the arrows HTML elements.
+       *
+       * @return {Void}
+       */
+      mount: function mount() {
+        /**
+         * Collection of navigation HTML elements.
+         *
+         * @private
+         * @type {HTMLCollection}
+         */
+        this._n = Components.Html.root.querySelectorAll(NAV_SELECTOR);
+
+        /**
+         * Collection of controls HTML elements.
+         *
+         * @private
+         * @type {HTMLCollection}
+         */
+        this._c = Components.Html.root.querySelectorAll(CONTROLS_SELECTOR);
+
+        this.addBindings();
+      },
+
+
+      /**
+       * Sets active class to current slide.
+       *
+       * @return {Void}
+       */
+      setActive: function setActive() {
+        for (var i = 0; i < this._n.length; i++) {
+          this.addClass(this._n[i].children);
+        }
+      },
+
+
+      /**
+       * Removes active class to current slide.
+       *
+       * @return {Void}
+       */
+      removeActive: function removeActive() {
+        for (var i = 0; i < this._n.length; i++) {
+          this.removeClass(this._n[i].children);
+        }
+      },
+
+
+      /**
+       * Toggles active class on items inside navigation.
+       *
+       * @param  {HTMLElement} controls
+       * @return {Void}
+       */
+      addClass: function addClass(controls) {
+        var settings = Glide.settings;
+        var item = controls[Glide.index];
+
+        item.classList.add(settings.classes.activeNav);
+
+        siblings(item).forEach(function (sibling) {
+          sibling.classList.remove(settings.classes.activeNav);
+        });
+      },
+
+
+      /**
+       * Removes active class from active control.
+       *
+       * @param  {HTMLElement} controls
+       * @return {Void}
+       */
+      removeClass: function removeClass(controls) {
+        controls[Glide.index].classList.remove(Glide.settings.classes.activeNav);
+      },
+
+
+      /**
+       * Adds handles to the each group of controls.
+       *
+       * @return {Void}
+       */
+      addBindings: function addBindings() {
+        for (var i = 0; i < this._c.length; i++) {
+          this.bind(this._c[i].children);
+        }
+      },
+
+
+      /**
+       * Removes handles from the each group of controls.
+       *
+       * @return {Void}
+       */
+      removeBindings: function removeBindings() {
+        for (var i = 0; i < this._c.length; i++) {
+          this.unbind(this._c[i].children);
+        }
+      },
+
+
+      /**
+       * Binds events to arrows HTML elements.
+       *
+       * @param {HTMLCollection} elements
+       * @return {Void}
+       */
+      bind: function bind(elements) {
+        for (var i = 0; i < elements.length; i++) {
+          Binder.on(['click', 'touchstart'], elements[i], this.click);
+        }
+      },
+
+
+      /**
+       * Unbinds events binded to the arrows HTML elements.
+       *
+       * @param {HTMLCollection} elements
+       * @return {Void}
+       */
+      unbind: function unbind(elements) {
+        for (var i = 0; i < elements.length; i++) {
+          Binder.off(['click', 'touchstart'], elements[i]);
+        }
+      },
+
+
+      /**
+       * Handles `click` event on the arrows HTML elements.
+       * Moves slider in driection precised in
+       * `data-glide-dir` attribute.
+       *
+       * @param {Object} event
+       * @return {Void}
+       */
+      click: function click(event) {
+        event.preventDefault();
+
+        Components.Run.make(Components.Direction.resolve(event.currentTarget.getAttribute('data-glide-dir')));
+      }
+    };
+
+    define(Controls, 'items', {
+      /**
+       * Gets collection of the controls HTML elements.
+       *
+       * @return {HTMLElement[]}
+       */
+      get: function get() {
+        return Controls._c;
+      }
+    });
+
+    /**
+     * Swap active class of current navigation item:
+     * - after mounting to set it to initial index
+     * - after each move to the new index
+     */
+    Events.on(['mount.after', 'move.after'], function () {
+      Controls.setActive();
+    });
+
+    /**
+     * Remove bindings and HTML Classes:
+     * - on destroying, to bring markup to its initial state
+     */
+    Events.on('destroy', function () {
+      Controls.removeBindings();
+      Controls.removeActive();
+      Binder.destroy();
+    });
+
+    return Controls;
+  }
+
+  function Keyboard (Glide, Components, Events) {
+    /**
+     * Instance of the binder for DOM Events.
+     *
+     * @type {EventsBinder}
+     */
+    var Binder = new EventsBinder();
+
+    var Keyboard = {
+      /**
+       * Binds keyboard events on component mount.
+       *
+       * @return {Void}
+       */
+      mount: function mount() {
+        if (Glide.settings.keyboard) {
+          this.bind();
+        }
+      },
+
+
+      /**
+       * Adds keyboard press events.
+       *
+       * @return {Void}
+       */
+      bind: function bind() {
+        Binder.on('keyup', document, this.press);
+      },
+
+
+      /**
+       * Removes keyboard press events.
+       *
+       * @return {Void}
+       */
+      unbind: function unbind() {
+        Binder.off('keyup', document);
+      },
+
+
+      /**
+       * Handles keyboard's arrows press and moving glide foward and backward.
+       *
+       * @param  {Object} event
+       * @return {Void}
+       */
+      press: function press(event) {
+        if (event.keyCode === 39) {
+          Components.Run.make(Components.Direction.resolve('>'));
+        }
+
+        if (event.keyCode === 37) {
+          Components.Run.make(Components.Direction.resolve('<'));
+        }
+      }
+    };
+
+    /**
+     * Remove bindings from keyboard:
+     * - on destroying to remove added events
+     * - on updating to remove events before remounting
+     */
+    Events.on(['destroy', 'update'], function () {
+      Keyboard.unbind();
+    });
+
+    /**
+     * Remount component
+     * - on updating to reflect potential changes in settings
+     */
+    Events.on('update', function () {
+      Keyboard.mount();
+    });
+
+    /**
+     * Destroy binder:
+     * - on destroying to remove listeners
+     */
+    Events.on('destroy', function () {
+      Binder.destroy();
+    });
+
+    return Keyboard;
+  }
+
+  function Autoplay (Glide, Components, Events) {
+    /**
+     * Instance of the binder for DOM Events.
+     *
+     * @type {EventsBinder}
+     */
+    var Binder = new EventsBinder();
+
+    var Autoplay = {
+      /**
+       * Initializes autoplaying and events.
+       *
+       * @return {Void}
+       */
+      mount: function mount() {
+        this.start();
+
+        if (Glide.settings.hoverpause) {
+          this.bind();
+        }
+      },
+
+
+      /**
+       * Starts autoplaying in configured interval.
+       *
+       * @param {Boolean|Number} force Run autoplaying with passed interval regardless of `autoplay` settings
+       * @return {Void}
+       */
+      start: function start() {
+        var _this = this;
+
+        if (Glide.settings.autoplay) {
+          if (isUndefined(this._i)) {
+            this._i = setInterval(function () {
+              _this.stop();
+
+              Components.Run.make('>');
+
+              _this.start();
+            }, this.time);
+          }
+        }
+      },
+
+
+      /**
+       * Stops autorunning of the glide.
+       *
+       * @return {Void}
+       */
+      stop: function stop() {
+        this._i = clearInterval(this._i);
+      },
+
+
+      /**
+       * Stops autoplaying while mouse is over glide's area.
+       *
+       * @return {Void}
+       */
+      bind: function bind() {
+        var _this2 = this;
+
+        Binder.on('mouseover', Components.Html.root, function () {
+          _this2.stop();
+        });
+
+        Binder.on('mouseout', Components.Html.root, function () {
+          _this2.start();
+        });
+      },
+
+
+      /**
+       * Unbind mouseover events.
+       *
+       * @returns {Void}
+       */
+      unbind: function unbind() {
+        Binder.off(['mouseover', 'mouseout'], Components.Html.root);
+      }
+    };
+
+    define(Autoplay, 'time', {
+      /**
+       * Gets time period value for the autoplay interval. Prioritizes
+       * times in `data-glide-autoplay` attrubutes over options.
+       *
+       * @return {Number}
+       */
+      get: function get() {
+        var autoplay = Components.Html.slides[Glide.index].getAttribute('data-glide-autoplay');
+
+        if (autoplay) {
+          return toInt(autoplay);
+        }
+
+        return toInt(Glide.settings.autoplay);
+      }
+    });
+
+    /**
+     * Stop autoplaying and unbind events:
+     * - on destroying, to clear defined interval
+     * - on updating via API to reset interval that may changed
+     */
+    Events.on(['destroy', 'update'], function () {
+      Autoplay.unbind();
+    });
+
+    /**
+     * Stop autoplaying:
+     * - before each run, to restart autoplaying
+     * - on pausing via API
+     * - on destroying, to clear defined interval
+     * - while starting a swipe
+     * - on updating via API to reset interval that may changed
+     */
+    Events.on(['run.before', 'pause', 'destroy', 'swipe.start', 'update'], function () {
+      Autoplay.stop();
+    });
+
+    /**
+     * Start autoplaying:
+     * - after each run, to restart autoplaying
+     * - on playing via API
+     * - while ending a swipe
+     */
+    Events.on(['run.after', 'play', 'swipe.end'], function () {
+      Autoplay.start();
+    });
+
+    /**
+     * Remount autoplaying:
+     * - on updating via API to reset interval that may changed
+     */
+    Events.on('update', function () {
+      Autoplay.mount();
+    });
+
+    /**
+     * Destroy a binder:
+     * - on destroying glide instance to clearup listeners
+     */
+    Events.on('destroy', function () {
+      Binder.destroy();
+    });
+
+    return Autoplay;
+  }
+
+  /**
+   * Sorts keys of breakpoint object so they will be ordered from lower to bigger.
+   *
+   * @param {Object} points
+   * @returns {Object}
+   */
+  function sortBreakpoints(points) {
+    if (isObject(points)) {
+      return sortKeys(points);
+    } else {
+      warn('Breakpoints option must be an object');
+    }
+
+    return {};
+  }
+
+  function Breakpoints (Glide, Components, Events) {
+    /**
+     * Instance of the binder for DOM Events.
+     *
+     * @type {EventsBinder}
+     */
+    var Binder = new EventsBinder();
+
+    /**
+     * Holds reference to settings.
+     *
+     * @type {Object}
+     */
+    var settings = Glide.settings;
+
+    /**
+     * Holds reference to breakpoints object in settings. Sorts breakpoints
+     * from smaller to larger. It is required in order to proper
+     * matching currently active breakpoint settings.
+     *
+     * @type {Object}
+     */
+    var points = sortBreakpoints(settings.breakpoints);
+
+    /**
+     * Cache initial settings before overwritting.
+     *
+     * @type {Object}
+     */
+    var defaults = _extends({}, settings);
+
+    var Breakpoints = {
+      /**
+       * Matches settings for currectly matching media breakpoint.
+       *
+       * @param {Object} points
+       * @returns {Object}
+       */
+      match: function match(points) {
+        if (typeof window.matchMedia !== 'undefined') {
+          for (var point in points) {
+            if (points.hasOwnProperty(point)) {
+              if (window.matchMedia('(max-width: ' + point + 'px)').matches) {
+                return points[point];
+              }
+            }
+          }
+        }
+
+        return defaults;
+      }
+    };
+
+    /**
+     * Overwrite instance settings with currently matching breakpoint settings.
+     * This happens right after component initialization.
+     */
+    _extends(settings, Breakpoints.match(points));
+
+    /**
+     * Update glide with settings of matched brekpoint:
+     * - window resize to update slider
+     */
+    Binder.on('resize', window, throttle(function () {
+      Glide.settings = mergeOptions(settings, Breakpoints.match(points));
+    }, Glide.settings.throttle));
+
+    /**
+     * Resort and update default settings:
+     * - on reinit via API, so breakpoint matching will be performed with options
+     */
+    Events.on('update', function () {
+      points = sortBreakpoints(points);
+
+      defaults = _extends({}, settings);
+    });
+
+    /**
+     * Unbind resize listener:
+     * - on destroying, to bring markup to its initial state
+     */
+    Events.on('destroy', function () {
+      Binder.off('resize', window);
+    });
+
+    return Breakpoints;
+  }
+
+  var COMPONENTS = {
+    // Required
+    Html: Html,
+    Translate: Translate,
+    Transition: Transition,
+    Direction: Direction,
+    Peek: Peek,
+    Sizes: Sizes,
+    Gaps: Gaps,
+    Move: Move,
+    Clones: Clones,
+    Resize: Resize,
+    Build: Build,
+    Run: Run,
+
+    // Optional
+    Swipe: Swipe,
+    Images: Images,
+    Anchors: Anchors,
+    Controls: Controls,
+    Keyboard: Keyboard,
+    Autoplay: Autoplay,
+    Breakpoints: Breakpoints
+  };
+
+  var Glide$1 = function (_Core) {
+    inherits(Glide$$1, _Core);
+
+    function Glide$$1() {
+      classCallCheck(this, Glide$$1);
+      return possibleConstructorReturn(this, (Glide$$1.__proto__ || Object.getPrototypeOf(Glide$$1)).apply(this, arguments));
+    }
+
+    createClass(Glide$$1, [{
+      key: 'mount',
+      value: function mount() {
+        var extensions = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+
+        return get(Glide$$1.prototype.__proto__ || Object.getPrototypeOf(Glide$$1.prototype), 'mount', this).call(this, _extends({}, COMPONENTS, extensions));
+      }
+    }]);
+    return Glide$$1;
+  }(Glide);
+
+  return Glide$1;
+
+})));
+
+!function(e,t){"object"==typeof exports&&"object"==typeof module?module.exports=t():"function"==typeof define&&define.amd?define([],t):"object"==typeof exports?exports.AOS=t():e.AOS=t()}(this,function(){return function(e){function t(o){if(n[o])return n[o].exports;var i=n[o]={exports:{},id:o,loaded:!1};return e[o].call(i.exports,i,i.exports,t),i.loaded=!0,i.exports}var n={};return t.m=e,t.c=n,t.p="dist/",t(0)}([function(e,t,n){"use strict";function o(e){return e&&e.__esModule?e:{default:e}}var i=Object.assign||function(e){for(var t=1;t<arguments.length;t++){var n=arguments[t];for(var o in n)Object.prototype.hasOwnProperty.call(n,o)&&(e[o]=n[o])}return e},r=n(1),a=(o(r),n(6)),u=o(a),c=n(7),f=o(c),s=n(8),d=o(s),l=n(9),p=o(l),m=n(10),b=o(m),v=n(11),y=o(v),g=n(14),h=o(g),w=[],k=!1,x={offset:120,delay:0,easing:"ease",duration:400,disable:!1,once:!1,startEvent:"DOMContentLoaded",throttleDelay:99,debounceDelay:50,disableMutationObserver:!1},j=function(){var e=arguments.length>0&&void 0!==arguments[0]&&arguments[0];if(e&&(k=!0),k)return w=(0,y.default)(w,x),(0,b.default)(w,x.once),w},O=function(){w=(0,h.default)(),j()},_=function(){w.forEach(function(e,t){e.node.removeAttribute("data-aos"),e.node.removeAttribute("data-aos-easing"),e.node.removeAttribute("data-aos-duration"),e.node.removeAttribute("data-aos-delay")})},S=function(e){return e===!0||"mobile"===e&&p.default.mobile()||"phone"===e&&p.default.phone()||"tablet"===e&&p.default.tablet()||"function"==typeof e&&e()===!0},z=function(e){x=i(x,e),w=(0,h.default)();var t=document.all&&!window.atob;return S(x.disable)||t?_():(document.querySelector("body").setAttribute("data-aos-easing",x.easing),document.querySelector("body").setAttribute("data-aos-duration",x.duration),document.querySelector("body").setAttribute("data-aos-delay",x.delay),"DOMContentLoaded"===x.startEvent&&["complete","interactive"].indexOf(document.readyState)>-1?j(!0):"load"===x.startEvent?window.addEventListener(x.startEvent,function(){j(!0)}):document.addEventListener(x.startEvent,function(){j(!0)}),window.addEventListener("resize",(0,f.default)(j,x.debounceDelay,!0)),window.addEventListener("orientationchange",(0,f.default)(j,x.debounceDelay,!0)),window.addEventListener("scroll",(0,u.default)(function(){(0,b.default)(w,x.once)},x.throttleDelay)),x.disableMutationObserver||(0,d.default)("[data-aos]",O),w)};e.exports={init:z,refresh:j,refreshHard:O}},function(e,t){},,,,,function(e,t){(function(t){"use strict";function n(e,t,n){function o(t){var n=b,o=v;return b=v=void 0,k=t,g=e.apply(o,n)}function r(e){return k=e,h=setTimeout(s,t),_?o(e):g}function a(e){var n=e-w,o=e-k,i=t-n;return S?j(i,y-o):i}function c(e){var n=e-w,o=e-k;return void 0===w||n>=t||n<0||S&&o>=y}function s(){var e=O();return c(e)?d(e):void(h=setTimeout(s,a(e)))}function d(e){return h=void 0,z&&b?o(e):(b=v=void 0,g)}function l(){void 0!==h&&clearTimeout(h),k=0,b=w=v=h=void 0}function p(){return void 0===h?g:d(O())}function m(){var e=O(),n=c(e);if(b=arguments,v=this,w=e,n){if(void 0===h)return r(w);if(S)return h=setTimeout(s,t),o(w)}return void 0===h&&(h=setTimeout(s,t)),g}var b,v,y,g,h,w,k=0,_=!1,S=!1,z=!0;if("function"!=typeof e)throw new TypeError(f);return t=u(t)||0,i(n)&&(_=!!n.leading,S="maxWait"in n,y=S?x(u(n.maxWait)||0,t):y,z="trailing"in n?!!n.trailing:z),m.cancel=l,m.flush=p,m}function o(e,t,o){var r=!0,a=!0;if("function"!=typeof e)throw new TypeError(f);return i(o)&&(r="leading"in o?!!o.leading:r,a="trailing"in o?!!o.trailing:a),n(e,t,{leading:r,maxWait:t,trailing:a})}function i(e){var t="undefined"==typeof e?"undefined":c(e);return!!e&&("object"==t||"function"==t)}function r(e){return!!e&&"object"==("undefined"==typeof e?"undefined":c(e))}function a(e){return"symbol"==("undefined"==typeof e?"undefined":c(e))||r(e)&&k.call(e)==d}function u(e){if("number"==typeof e)return e;if(a(e))return s;if(i(e)){var t="function"==typeof e.valueOf?e.valueOf():e;e=i(t)?t+"":t}if("string"!=typeof e)return 0===e?e:+e;e=e.replace(l,"");var n=m.test(e);return n||b.test(e)?v(e.slice(2),n?2:8):p.test(e)?s:+e}var c="function"==typeof Symbol&&"symbol"==typeof Symbol.iterator?function(e){return typeof e}:function(e){return e&&"function"==typeof Symbol&&e.constructor===Symbol&&e!==Symbol.prototype?"symbol":typeof e},f="Expected a function",s=NaN,d="[object Symbol]",l=/^\s+|\s+$/g,p=/^[-+]0x[0-9a-f]+$/i,m=/^0b[01]+$/i,b=/^0o[0-7]+$/i,v=parseInt,y="object"==("undefined"==typeof t?"undefined":c(t))&&t&&t.Object===Object&&t,g="object"==("undefined"==typeof self?"undefined":c(self))&&self&&self.Object===Object&&self,h=y||g||Function("return this")(),w=Object.prototype,k=w.toString,x=Math.max,j=Math.min,O=function(){return h.Date.now()};e.exports=o}).call(t,function(){return this}())},function(e,t){(function(t){"use strict";function n(e,t,n){function i(t){var n=b,o=v;return b=v=void 0,O=t,g=e.apply(o,n)}function r(e){return O=e,h=setTimeout(s,t),_?i(e):g}function u(e){var n=e-w,o=e-O,i=t-n;return S?x(i,y-o):i}function f(e){var n=e-w,o=e-O;return void 0===w||n>=t||n<0||S&&o>=y}function s(){var e=j();return f(e)?d(e):void(h=setTimeout(s,u(e)))}function d(e){return h=void 0,z&&b?i(e):(b=v=void 0,g)}function l(){void 0!==h&&clearTimeout(h),O=0,b=w=v=h=void 0}function p(){return void 0===h?g:d(j())}function m(){var e=j(),n=f(e);if(b=arguments,v=this,w=e,n){if(void 0===h)return r(w);if(S)return h=setTimeout(s,t),i(w)}return void 0===h&&(h=setTimeout(s,t)),g}var b,v,y,g,h,w,O=0,_=!1,S=!1,z=!0;if("function"!=typeof e)throw new TypeError(c);return t=a(t)||0,o(n)&&(_=!!n.leading,S="maxWait"in n,y=S?k(a(n.maxWait)||0,t):y,z="trailing"in n?!!n.trailing:z),m.cancel=l,m.flush=p,m}function o(e){var t="undefined"==typeof e?"undefined":u(e);return!!e&&("object"==t||"function"==t)}function i(e){return!!e&&"object"==("undefined"==typeof e?"undefined":u(e))}function r(e){return"symbol"==("undefined"==typeof e?"undefined":u(e))||i(e)&&w.call(e)==s}function a(e){if("number"==typeof e)return e;if(r(e))return f;if(o(e)){var t="function"==typeof e.valueOf?e.valueOf():e;e=o(t)?t+"":t}if("string"!=typeof e)return 0===e?e:+e;e=e.replace(d,"");var n=p.test(e);return n||m.test(e)?b(e.slice(2),n?2:8):l.test(e)?f:+e}var u="function"==typeof Symbol&&"symbol"==typeof Symbol.iterator?function(e){return typeof e}:function(e){return e&&"function"==typeof Symbol&&e.constructor===Symbol&&e!==Symbol.prototype?"symbol":typeof e},c="Expected a function",f=NaN,s="[object Symbol]",d=/^\s+|\s+$/g,l=/^[-+]0x[0-9a-f]+$/i,p=/^0b[01]+$/i,m=/^0o[0-7]+$/i,b=parseInt,v="object"==("undefined"==typeof t?"undefined":u(t))&&t&&t.Object===Object&&t,y="object"==("undefined"==typeof self?"undefined":u(self))&&self&&self.Object===Object&&self,g=v||y||Function("return this")(),h=Object.prototype,w=h.toString,k=Math.max,x=Math.min,j=function(){return g.Date.now()};e.exports=n}).call(t,function(){return this}())},function(e,t){"use strict";function n(e){var t=void 0,o=void 0,i=void 0;for(t=0;t<e.length;t+=1){if(o=e[t],o.dataset&&o.dataset.aos)return!0;if(i=o.children&&n(o.children))return!0}return!1}function o(e,t){var n=window.document,o=window.MutationObserver||window.WebKitMutationObserver||window.MozMutationObserver,a=new o(i);r=t,a.observe(n.documentElement,{childList:!0,subtree:!0,removedNodes:!0})}function i(e){e&&e.forEach(function(e){var t=Array.prototype.slice.call(e.addedNodes),o=Array.prototype.slice.call(e.removedNodes),i=t.concat(o);if(n(i))return r()})}Object.defineProperty(t,"__esModule",{value:!0});var r=function(){};t.default=o},function(e,t){"use strict";function n(e,t){if(!(e instanceof t))throw new TypeError("Cannot call a class as a function")}function o(){return navigator.userAgent||navigator.vendor||window.opera||""}Object.defineProperty(t,"__esModule",{value:!0});var i=function(){function e(e,t){for(var n=0;n<t.length;n++){var o=t[n];o.enumerable=o.enumerable||!1,o.configurable=!0,"value"in o&&(o.writable=!0),Object.defineProperty(e,o.key,o)}}return function(t,n,o){return n&&e(t.prototype,n),o&&e(t,o),t}}(),r=/(android|bb\d+|meego).+mobile|avantgo|bada\/|blackberry|blazer|compal|elaine|fennec|hiptop|iemobile|ip(hone|od)|iris|kindle|lge |maemo|midp|mmp|mobile.+firefox|netfront|opera m(ob|in)i|palm( os)?|phone|p(ixi|re)\/|plucker|pocket|psp|series(4|6)0|symbian|treo|up\.(browser|link)|vodafone|wap|windows ce|xda|xiino/i,a=/1207|6310|6590|3gso|4thp|50[1-6]i|770s|802s|a wa|abac|ac(er|oo|s\-)|ai(ko|rn)|al(av|ca|co)|amoi|an(ex|ny|yw)|aptu|ar(ch|go)|as(te|us)|attw|au(di|\-m|r |s )|avan|be(ck|ll|nq)|bi(lb|rd)|bl(ac|az)|br(e|v)w|bumb|bw\-(n|u)|c55\/|capi|ccwa|cdm\-|cell|chtm|cldc|cmd\-|co(mp|nd)|craw|da(it|ll|ng)|dbte|dc\-s|devi|dica|dmob|do(c|p)o|ds(12|\-d)|el(49|ai)|em(l2|ul)|er(ic|k0)|esl8|ez([4-7]0|os|wa|ze)|fetc|fly(\-|_)|g1 u|g560|gene|gf\-5|g\-mo|go(\.w|od)|gr(ad|un)|haie|hcit|hd\-(m|p|t)|hei\-|hi(pt|ta)|hp( i|ip)|hs\-c|ht(c(\-| |_|a|g|p|s|t)|tp)|hu(aw|tc)|i\-(20|go|ma)|i230|iac( |\-|\/)|ibro|idea|ig01|ikom|im1k|inno|ipaq|iris|ja(t|v)a|jbro|jemu|jigs|kddi|keji|kgt( |\/)|klon|kpt |kwc\-|kyo(c|k)|le(no|xi)|lg( g|\/(k|l|u)|50|54|\-[a-w])|libw|lynx|m1\-w|m3ga|m50\/|ma(te|ui|xo)|mc(01|21|ca)|m\-cr|me(rc|ri)|mi(o8|oa|ts)|mmef|mo(01|02|bi|de|do|t(\-| |o|v)|zz)|mt(50|p1|v )|mwbp|mywa|n10[0-2]|n20[2-3]|n30(0|2)|n50(0|2|5)|n7(0(0|1)|10)|ne((c|m)\-|on|tf|wf|wg|wt)|nok(6|i)|nzph|o2im|op(ti|wv)|oran|owg1|p800|pan(a|d|t)|pdxg|pg(13|\-([1-8]|c))|phil|pire|pl(ay|uc)|pn\-2|po(ck|rt|se)|prox|psio|pt\-g|qa\-a|qc(07|12|21|32|60|\-[2-7]|i\-)|qtek|r380|r600|raks|rim9|ro(ve|zo)|s55\/|sa(ge|ma|mm|ms|ny|va)|sc(01|h\-|oo|p\-)|sdk\/|se(c(\-|0|1)|47|mc|nd|ri)|sgh\-|shar|sie(\-|m)|sk\-0|sl(45|id)|sm(al|ar|b3|it|t5)|so(ft|ny)|sp(01|h\-|v\-|v )|sy(01|mb)|t2(18|50)|t6(00|10|18)|ta(gt|lk)|tcl\-|tdg\-|tel(i|m)|tim\-|t\-mo|to(pl|sh)|ts(70|m\-|m3|m5)|tx\-9|up(\.b|g1|si)|utst|v400|v750|veri|vi(rg|te)|vk(40|5[0-3]|\-v)|vm40|voda|vulc|vx(52|53|60|61|70|80|81|83|85|98)|w3c(\-| )|webc|whit|wi(g |nc|nw)|wmlb|wonu|x700|yas\-|your|zeto|zte\-/i,u=/(android|bb\d+|meego).+mobile|avantgo|bada\/|blackberry|blazer|compal|elaine|fennec|hiptop|iemobile|ip(hone|od)|iris|kindle|lge |maemo|midp|mmp|mobile.+firefox|netfront|opera m(ob|in)i|palm( os)?|phone|p(ixi|re)\/|plucker|pocket|psp|series(4|6)0|symbian|treo|up\.(browser|link)|vodafone|wap|windows ce|xda|xiino|android|ipad|playbook|silk/i,c=/1207|6310|6590|3gso|4thp|50[1-6]i|770s|802s|a wa|abac|ac(er|oo|s\-)|ai(ko|rn)|al(av|ca|co)|amoi|an(ex|ny|yw)|aptu|ar(ch|go)|as(te|us)|attw|au(di|\-m|r |s )|avan|be(ck|ll|nq)|bi(lb|rd)|bl(ac|az)|br(e|v)w|bumb|bw\-(n|u)|c55\/|capi|ccwa|cdm\-|cell|chtm|cldc|cmd\-|co(mp|nd)|craw|da(it|ll|ng)|dbte|dc\-s|devi|dica|dmob|do(c|p)o|ds(12|\-d)|el(49|ai)|em(l2|ul)|er(ic|k0)|esl8|ez([4-7]0|os|wa|ze)|fetc|fly(\-|_)|g1 u|g560|gene|gf\-5|g\-mo|go(\.w|od)|gr(ad|un)|haie|hcit|hd\-(m|p|t)|hei\-|hi(pt|ta)|hp( i|ip)|hs\-c|ht(c(\-| |_|a|g|p|s|t)|tp)|hu(aw|tc)|i\-(20|go|ma)|i230|iac( |\-|\/)|ibro|idea|ig01|ikom|im1k|inno|ipaq|iris|ja(t|v)a|jbro|jemu|jigs|kddi|keji|kgt( |\/)|klon|kpt |kwc\-|kyo(c|k)|le(no|xi)|lg( g|\/(k|l|u)|50|54|\-[a-w])|libw|lynx|m1\-w|m3ga|m50\/|ma(te|ui|xo)|mc(01|21|ca)|m\-cr|me(rc|ri)|mi(o8|oa|ts)|mmef|mo(01|02|bi|de|do|t(\-| |o|v)|zz)|mt(50|p1|v )|mwbp|mywa|n10[0-2]|n20[2-3]|n30(0|2)|n50(0|2|5)|n7(0(0|1)|10)|ne((c|m)\-|on|tf|wf|wg|wt)|nok(6|i)|nzph|o2im|op(ti|wv)|oran|owg1|p800|pan(a|d|t)|pdxg|pg(13|\-([1-8]|c))|phil|pire|pl(ay|uc)|pn\-2|po(ck|rt|se)|prox|psio|pt\-g|qa\-a|qc(07|12|21|32|60|\-[2-7]|i\-)|qtek|r380|r600|raks|rim9|ro(ve|zo)|s55\/|sa(ge|ma|mm|ms|ny|va)|sc(01|h\-|oo|p\-)|sdk\/|se(c(\-|0|1)|47|mc|nd|ri)|sgh\-|shar|sie(\-|m)|sk\-0|sl(45|id)|sm(al|ar|b3|it|t5)|so(ft|ny)|sp(01|h\-|v\-|v )|sy(01|mb)|t2(18|50)|t6(00|10|18)|ta(gt|lk)|tcl\-|tdg\-|tel(i|m)|tim\-|t\-mo|to(pl|sh)|ts(70|m\-|m3|m5)|tx\-9|up(\.b|g1|si)|utst|v400|v750|veri|vi(rg|te)|vk(40|5[0-3]|\-v)|vm40|voda|vulc|vx(52|53|60|61|70|80|81|83|85|98)|w3c(\-| )|webc|whit|wi(g |nc|nw)|wmlb|wonu|x700|yas\-|your|zeto|zte\-/i,f=function(){function e(){n(this,e)}return i(e,[{key:"phone",value:function(){var e=o();return!(!r.test(e)&&!a.test(e.substr(0,4)))}},{key:"mobile",value:function(){var e=o();return!(!u.test(e)&&!c.test(e.substr(0,4)))}},{key:"tablet",value:function(){return this.mobile()&&!this.phone()}}]),e}();t.default=new f},function(e,t){"use strict";Object.defineProperty(t,"__esModule",{value:!0});var n=function(e,t,n){var o=e.node.getAttribute("data-aos-once");t>e.position?e.node.classList.add("aos-animate"):"undefined"!=typeof o&&("false"===o||!n&&"true"!==o)&&e.node.classList.remove("aos-animate")},o=function(e,t){var o=window.pageYOffset,i=window.innerHeight;e.forEach(function(e,r){n(e,i+o,t)})};t.default=o},function(e,t,n){"use strict";function o(e){return e&&e.__esModule?e:{default:e}}Object.defineProperty(t,"__esModule",{value:!0});var i=n(12),r=o(i),a=function(e,t){return e.forEach(function(e,n){e.node.classList.add("aos-init"),e.position=(0,r.default)(e.node,t.offset)}),e};t.default=a},function(e,t,n){"use strict";function o(e){return e&&e.__esModule?e:{default:e}}Object.defineProperty(t,"__esModule",{value:!0});var i=n(13),r=o(i),a=function(e,t){var n=0,o=0,i=window.innerHeight,a={offset:e.getAttribute("data-aos-offset"),anchor:e.getAttribute("data-aos-anchor"),anchorPlacement:e.getAttribute("data-aos-anchor-placement")};switch(a.offset&&!isNaN(a.offset)&&(o=parseInt(a.offset)),a.anchor&&document.querySelectorAll(a.anchor)&&(e=document.querySelectorAll(a.anchor)[0]),n=(0,r.default)(e).top,a.anchorPlacement){case"top-bottom":break;case"center-bottom":n+=e.offsetHeight/2;break;case"bottom-bottom":n+=e.offsetHeight;break;case"top-center":n+=i/2;break;case"bottom-center":n+=i/2+e.offsetHeight;break;case"center-center":n+=i/2+e.offsetHeight/2;break;case"top-top":n+=i;break;case"bottom-top":n+=e.offsetHeight+i;break;case"center-top":n+=e.offsetHeight/2+i}return a.anchorPlacement||a.offset||isNaN(t)||(o=t),n+o};t.default=a},function(e,t){"use strict";Object.defineProperty(t,"__esModule",{value:!0});var n=function(e){for(var t=0,n=0;e&&!isNaN(e.offsetLeft)&&!isNaN(e.offsetTop);)t+=e.offsetLeft-("BODY"!=e.tagName?e.scrollLeft:0),n+=e.offsetTop-("BODY"!=e.tagName?e.scrollTop:0),e=e.offsetParent;return{top:n,left:t}};t.default=n},function(e,t){"use strict";Object.defineProperty(t,"__esModule",{value:!0});var n=function(e){return e=e||document.querySelectorAll("[data-aos]"),Array.prototype.map.call(e,function(e){return{node:e}})};t.default=n}])});
 var ac,
 accordions = {
 	settings: {
@@ -22,9 +3989,6 @@ accordions = {
 	init: function() {
 		ac = this.settings;
 		this.bindUIActions();
-		// Optional - Expose scoped vars to global $. Use in console with $.expose
-		$.expose.ac = ac;
-		$.expose.accordions = accordions;
 		console.log('accordions loaded!');
 	},
 	bindUIActions: function() {
@@ -33,6 +3997,22 @@ accordions = {
 				// Animation complete.
 			});
 		});
+	}
+};
+
+var as,
+aos = {
+	settings: {
+		// slide: $('.slide'),
+		// slideList: $('.slide-list')
+	},
+	init: function() {
+		as = this.settings;
+		this.bindUIActions();
+		console.log('aos loaded!');
+	},
+	bindUIActions: function() {
+
 	}
 };
 
@@ -45,9 +4025,6 @@ cookieNotice = {
 	init: function() {
 		cn = this.settings;
 		this.bindUIActions();
-		// Optional - Expose scoped vars to global $. Use in console with $.expose
-		$.expose.cn = cn;
-		$.expose.cookieNotice = cookieNotice;
 		console.log('cookieNotice loaded!');
 	},
 	bindUIActions: function() {
@@ -69,9 +4046,6 @@ notification = {
 	init: function() {
 		nf = this.settings;
 		this.bindUIActions();
-		// Optional - Expose scoped vars to global $. Use in console with $.expose
-		$.expose.nf = nf;
-		$.expose.notification = notification;
 		console.log('notification loaded!');
 	},
 	bindUIActions: function() {
@@ -90,48 +4064,68 @@ randomQuote = {
 	init: function() {
 		rq = this.settings;
 		this.bindUIActions();
-		// Optional - Expose scoped vars to global $. Use in console with $.expose
-		$.expose.rq = rq;
-		$.expose.randomQuote = randomQuote;
 		console.log('randomQuote loaded!');
 	},
 	bindUIActions: function() {
 		rq.quoteList.hide().eq(rq.random).show();
 	}
 };
-var sl,
-slider = {
+
+var rl,
+rellax = {
 	settings: {
-		slide: $('.slide'),
-		slideList: $('.slide-list')
+
 	},
 	init: function() {
-		sl = this.settings;
+		rl = this.settings;
 		this.bindUIActions();
-		// Optional - Expose scoped vars to global $. Use in console with $.expose
-		$.expose.sl = sl;
-		$.expose.slider = slider;
-		console.log('slider loaded!');
+		console.log('rellax loaded!');
 	},
 	bindUIActions: function() {
-		sl.slideList.slick({
-			infinite: true,
-			slidesToShow: 1,
-			slidesToScroll: 1,
-			arrows: true,
-		});
+		if (document.getElementsByClassName('rellax').length != 0) {
+			var rellax = new Rellax('.rellax', {
+				speed: -2,
+				center: false,
+				wrapper: null,
+				round: true,
+				vertical: true,
+				horizontal: false
+			});
+		}
 	}
 };
 
-!function(i){"use strict";"function"==typeof define&&define.amd?define(["jquery"],i):"undefined"!=typeof exports?module.exports=i(require("jquery")):i(jQuery)}(function(i){"use strict";var e=window.Slick||{};(e=function(){var e=0;return function(t,o){var s,n=this;n.defaults={accessibility:!0,adaptiveHeight:!1,appendArrows:i(t),appendDots:i(t),arrows:!0,asNavFor:null,prevArrow:'<button class="slick-prev" aria-label="Previous" type="button">Previous</button>',nextArrow:'<button class="slick-next" aria-label="Next" type="button">Next</button>',autoplay:!1,autoplaySpeed:3e3,centerMode:!1,centerPadding:"50px",cssEase:"ease",customPaging:function(e,t){return i('<button type="button" />').text(t+1)},dots:!1,dotsClass:"slick-dots",draggable:!0,easing:"linear",edgeFriction:.35,fade:!1,focusOnSelect:!1,focusOnChange:!1,infinite:!0,initialSlide:0,lazyLoad:"ondemand",mobileFirst:!1,pauseOnHover:!0,pauseOnFocus:!0,pauseOnDotsHover:!1,respondTo:"window",responsive:null,rows:1,rtl:!1,slide:"",slidesPerRow:1,slidesToShow:1,slidesToScroll:1,speed:500,swipe:!0,swipeToSlide:!1,touchMove:!0,touchThreshold:5,useCSS:!0,useTransform:!0,variableWidth:!1,vertical:!1,verticalSwiping:!1,waitForAnimate:!0,zIndex:1e3},n.initials={animating:!1,dragging:!1,autoPlayTimer:null,currentDirection:0,currentLeft:null,currentSlide:0,direction:1,$dots:null,listWidth:null,listHeight:null,loadIndex:0,$nextArrow:null,$prevArrow:null,scrolling:!1,slideCount:null,slideWidth:null,$slideTrack:null,$slides:null,sliding:!1,slideOffset:0,swipeLeft:null,swiping:!1,$list:null,touchObject:{},transformsEnabled:!1,unslicked:!1},i.extend(n,n.initials),n.activeBreakpoint=null,n.animType=null,n.animProp=null,n.breakpoints=[],n.breakpointSettings=[],n.cssTransitions=!1,n.focussed=!1,n.interrupted=!1,n.hidden="hidden",n.paused=!0,n.positionProp=null,n.respondTo=null,n.rowCount=1,n.shouldClick=!0,n.$slider=i(t),n.$slidesCache=null,n.transformType=null,n.transitionType=null,n.visibilityChange="visibilitychange",n.windowWidth=0,n.windowTimer=null,s=i(t).data("slick")||{},n.options=i.extend({},n.defaults,o,s),n.currentSlide=n.options.initialSlide,n.originalSettings=n.options,void 0!==document.mozHidden?(n.hidden="mozHidden",n.visibilityChange="mozvisibilitychange"):void 0!==document.webkitHidden&&(n.hidden="webkitHidden",n.visibilityChange="webkitvisibilitychange"),n.autoPlay=i.proxy(n.autoPlay,n),n.autoPlayClear=i.proxy(n.autoPlayClear,n),n.autoPlayIterator=i.proxy(n.autoPlayIterator,n),n.changeSlide=i.proxy(n.changeSlide,n),n.clickHandler=i.proxy(n.clickHandler,n),n.selectHandler=i.proxy(n.selectHandler,n),n.setPosition=i.proxy(n.setPosition,n),n.swipeHandler=i.proxy(n.swipeHandler,n),n.dragHandler=i.proxy(n.dragHandler,n),n.keyHandler=i.proxy(n.keyHandler,n),n.instanceUid=e++,n.htmlExpr=/^(?:\s*(<[\w\W]+>)[^>]*)$/,n.registerBreakpoints(),n.init(!0)}}()).prototype.activateADA=function(){this.$slideTrack.find(".slick-active").attr({"aria-hidden":"false"}).find("a, input, button, select").attr({tabindex:"0"})},e.prototype.addSlide=e.prototype.slickAdd=function(e,t,o){var s=this;if("boolean"==typeof t)o=t,t=null;else if(t<0||t>=s.slideCount)return!1;s.unload(),"number"==typeof t?0===t&&0===s.$slides.length?i(e).appendTo(s.$slideTrack):o?i(e).insertBefore(s.$slides.eq(t)):i(e).insertAfter(s.$slides.eq(t)):!0===o?i(e).prependTo(s.$slideTrack):i(e).appendTo(s.$slideTrack),s.$slides=s.$slideTrack.children(this.options.slide),s.$slideTrack.children(this.options.slide).detach(),s.$slideTrack.append(s.$slides),s.$slides.each(function(e,t){i(t).attr("data-slick-index",e)}),s.$slidesCache=s.$slides,s.reinit()},e.prototype.animateHeight=function(){var i=this;if(1===i.options.slidesToShow&&!0===i.options.adaptiveHeight&&!1===i.options.vertical){var e=i.$slides.eq(i.currentSlide).outerHeight(!0);i.$list.animate({height:e},i.options.speed)}},e.prototype.animateSlide=function(e,t){var o={},s=this;s.animateHeight(),!0===s.options.rtl&&!1===s.options.vertical&&(e=-e),!1===s.transformsEnabled?!1===s.options.vertical?s.$slideTrack.animate({left:e},s.options.speed,s.options.easing,t):s.$slideTrack.animate({top:e},s.options.speed,s.options.easing,t):!1===s.cssTransitions?(!0===s.options.rtl&&(s.currentLeft=-s.currentLeft),i({animStart:s.currentLeft}).animate({animStart:e},{duration:s.options.speed,easing:s.options.easing,step:function(i){i=Math.ceil(i),!1===s.options.vertical?(o[s.animType]="translate("+i+"px, 0px)",s.$slideTrack.css(o)):(o[s.animType]="translate(0px,"+i+"px)",s.$slideTrack.css(o))},complete:function(){t&&t.call()}})):(s.applyTransition(),e=Math.ceil(e),!1===s.options.vertical?o[s.animType]="translate3d("+e+"px, 0px, 0px)":o[s.animType]="translate3d(0px,"+e+"px, 0px)",s.$slideTrack.css(o),t&&setTimeout(function(){s.disableTransition(),t.call()},s.options.speed))},e.prototype.getNavTarget=function(){var e=this,t=e.options.asNavFor;return t&&null!==t&&(t=i(t).not(e.$slider)),t},e.prototype.asNavFor=function(e){var t=this.getNavTarget();null!==t&&"object"==typeof t&&t.each(function(){var t=i(this).slick("getSlick");t.unslicked||t.slideHandler(e,!0)})},e.prototype.applyTransition=function(i){var e=this,t={};!1===e.options.fade?t[e.transitionType]=e.transformType+" "+e.options.speed+"ms "+e.options.cssEase:t[e.transitionType]="opacity "+e.options.speed+"ms "+e.options.cssEase,!1===e.options.fade?e.$slideTrack.css(t):e.$slides.eq(i).css(t)},e.prototype.autoPlay=function(){var i=this;i.autoPlayClear(),i.slideCount>i.options.slidesToShow&&(i.autoPlayTimer=setInterval(i.autoPlayIterator,i.options.autoplaySpeed))},e.prototype.autoPlayClear=function(){var i=this;i.autoPlayTimer&&clearInterval(i.autoPlayTimer)},e.prototype.autoPlayIterator=function(){var i=this,e=i.currentSlide+i.options.slidesToScroll;i.paused||i.interrupted||i.focussed||(!1===i.options.infinite&&(1===i.direction&&i.currentSlide+1===i.slideCount-1?i.direction=0:0===i.direction&&(e=i.currentSlide-i.options.slidesToScroll,i.currentSlide-1==0&&(i.direction=1))),i.slideHandler(e))},e.prototype.buildArrows=function(){var e=this;!0===e.options.arrows&&(e.$prevArrow=i(e.options.prevArrow).addClass("slick-arrow"),e.$nextArrow=i(e.options.nextArrow).addClass("slick-arrow"),e.slideCount>e.options.slidesToShow?(e.$prevArrow.removeClass("slick-hidden").removeAttr("aria-hidden tabindex"),e.$nextArrow.removeClass("slick-hidden").removeAttr("aria-hidden tabindex"),e.htmlExpr.test(e.options.prevArrow)&&e.$prevArrow.prependTo(e.options.appendArrows),e.htmlExpr.test(e.options.nextArrow)&&e.$nextArrow.appendTo(e.options.appendArrows),!0!==e.options.infinite&&e.$prevArrow.addClass("slick-disabled").attr("aria-disabled","true")):e.$prevArrow.add(e.$nextArrow).addClass("slick-hidden").attr({"aria-disabled":"true",tabindex:"-1"}))},e.prototype.buildDots=function(){var e,t,o=this;if(!0===o.options.dots){for(o.$slider.addClass("slick-dotted"),t=i("<ul />").addClass(o.options.dotsClass),e=0;e<=o.getDotCount();e+=1)t.append(i("<li />").append(o.options.customPaging.call(this,o,e)));o.$dots=t.appendTo(o.options.appendDots),o.$dots.find("li").first().addClass("slick-active")}},e.prototype.buildOut=function(){var e=this;e.$slides=e.$slider.children(e.options.slide+":not(.slick-cloned)").addClass("slick-slide"),e.slideCount=e.$slides.length,e.$slides.each(function(e,t){i(t).attr("data-slick-index",e).data("originalStyling",i(t).attr("style")||"")}),e.$slider.addClass("slick-slider"),e.$slideTrack=0===e.slideCount?i('<div class="slick-track"/>').appendTo(e.$slider):e.$slides.wrapAll('<div class="slick-track"/>').parent(),e.$list=e.$slideTrack.wrap('<div class="slick-list"/>').parent(),e.$slideTrack.css("opacity",0),!0!==e.options.centerMode&&!0!==e.options.swipeToSlide||(e.options.slidesToScroll=1),i("img[data-lazy]",e.$slider).not("[src]").addClass("slick-loading"),e.setupInfinite(),e.buildArrows(),e.buildDots(),e.updateDots(),e.setSlideClasses("number"==typeof e.currentSlide?e.currentSlide:0),!0===e.options.draggable&&e.$list.addClass("draggable")},e.prototype.buildRows=function(){var i,e,t,o,s,n,r,l=this;if(o=document.createDocumentFragment(),n=l.$slider.children(),l.options.rows>1){for(r=l.options.slidesPerRow*l.options.rows,s=Math.ceil(n.length/r),i=0;i<s;i++){var d=document.createElement("div");for(e=0;e<l.options.rows;e++){var a=document.createElement("div");for(t=0;t<l.options.slidesPerRow;t++){var c=i*r+(e*l.options.slidesPerRow+t);n.get(c)&&a.appendChild(n.get(c))}d.appendChild(a)}o.appendChild(d)}l.$slider.empty().append(o),l.$slider.children().children().children().css({width:100/l.options.slidesPerRow+"%",display:"inline-block"})}},e.prototype.checkResponsive=function(e,t){var o,s,n,r=this,l=!1,d=r.$slider.width(),a=window.innerWidth||i(window).width();if("window"===r.respondTo?n=a:"slider"===r.respondTo?n=d:"min"===r.respondTo&&(n=Math.min(a,d)),r.options.responsive&&r.options.responsive.length&&null!==r.options.responsive){s=null;for(o in r.breakpoints)r.breakpoints.hasOwnProperty(o)&&(!1===r.originalSettings.mobileFirst?n<r.breakpoints[o]&&(s=r.breakpoints[o]):n>r.breakpoints[o]&&(s=r.breakpoints[o]));null!==s?null!==r.activeBreakpoint?(s!==r.activeBreakpoint||t)&&(r.activeBreakpoint=s,"unslick"===r.breakpointSettings[s]?r.unslick(s):(r.options=i.extend({},r.originalSettings,r.breakpointSettings[s]),!0===e&&(r.currentSlide=r.options.initialSlide),r.refresh(e)),l=s):(r.activeBreakpoint=s,"unslick"===r.breakpointSettings[s]?r.unslick(s):(r.options=i.extend({},r.originalSettings,r.breakpointSettings[s]),!0===e&&(r.currentSlide=r.options.initialSlide),r.refresh(e)),l=s):null!==r.activeBreakpoint&&(r.activeBreakpoint=null,r.options=r.originalSettings,!0===e&&(r.currentSlide=r.options.initialSlide),r.refresh(e),l=s),e||!1===l||r.$slider.trigger("breakpoint",[r,l])}},e.prototype.changeSlide=function(e,t){var o,s,n,r=this,l=i(e.currentTarget);switch(l.is("a")&&e.preventDefault(),l.is("li")||(l=l.closest("li")),n=r.slideCount%r.options.slidesToScroll!=0,o=n?0:(r.slideCount-r.currentSlide)%r.options.slidesToScroll,e.data.message){case"previous":s=0===o?r.options.slidesToScroll:r.options.slidesToShow-o,r.slideCount>r.options.slidesToShow&&r.slideHandler(r.currentSlide-s,!1,t);break;case"next":s=0===o?r.options.slidesToScroll:o,r.slideCount>r.options.slidesToShow&&r.slideHandler(r.currentSlide+s,!1,t);break;case"index":var d=0===e.data.index?0:e.data.index||l.index()*r.options.slidesToScroll;r.slideHandler(r.checkNavigable(d),!1,t),l.children().trigger("focus");break;default:return}},e.prototype.checkNavigable=function(i){var e,t;if(e=this.getNavigableIndexes(),t=0,i>e[e.length-1])i=e[e.length-1];else for(var o in e){if(i<e[o]){i=t;break}t=e[o]}return i},e.prototype.cleanUpEvents=function(){var e=this;e.options.dots&&null!==e.$dots&&(i("li",e.$dots).off("click.slick",e.changeSlide).off("mouseenter.slick",i.proxy(e.interrupt,e,!0)).off("mouseleave.slick",i.proxy(e.interrupt,e,!1)),!0===e.options.accessibility&&e.$dots.off("keydown.slick",e.keyHandler)),e.$slider.off("focus.slick blur.slick"),!0===e.options.arrows&&e.slideCount>e.options.slidesToShow&&(e.$prevArrow&&e.$prevArrow.off("click.slick",e.changeSlide),e.$nextArrow&&e.$nextArrow.off("click.slick",e.changeSlide),!0===e.options.accessibility&&(e.$prevArrow&&e.$prevArrow.off("keydown.slick",e.keyHandler),e.$nextArrow&&e.$nextArrow.off("keydown.slick",e.keyHandler))),e.$list.off("touchstart.slick mousedown.slick",e.swipeHandler),e.$list.off("touchmove.slick mousemove.slick",e.swipeHandler),e.$list.off("touchend.slick mouseup.slick",e.swipeHandler),e.$list.off("touchcancel.slick mouseleave.slick",e.swipeHandler),e.$list.off("click.slick",e.clickHandler),i(document).off(e.visibilityChange,e.visibility),e.cleanUpSlideEvents(),!0===e.options.accessibility&&e.$list.off("keydown.slick",e.keyHandler),!0===e.options.focusOnSelect&&i(e.$slideTrack).children().off("click.slick",e.selectHandler),i(window).off("orientationchange.slick.slick-"+e.instanceUid,e.orientationChange),i(window).off("resize.slick.slick-"+e.instanceUid,e.resize),i("[draggable!=true]",e.$slideTrack).off("dragstart",e.preventDefault),i(window).off("load.slick.slick-"+e.instanceUid,e.setPosition)},e.prototype.cleanUpSlideEvents=function(){var e=this;e.$list.off("mouseenter.slick",i.proxy(e.interrupt,e,!0)),e.$list.off("mouseleave.slick",i.proxy(e.interrupt,e,!1))},e.prototype.cleanUpRows=function(){var i,e=this;e.options.rows>1&&((i=e.$slides.children().children()).removeAttr("style"),e.$slider.empty().append(i))},e.prototype.clickHandler=function(i){!1===this.shouldClick&&(i.stopImmediatePropagation(),i.stopPropagation(),i.preventDefault())},e.prototype.destroy=function(e){var t=this;t.autoPlayClear(),t.touchObject={},t.cleanUpEvents(),i(".slick-cloned",t.$slider).detach(),t.$dots&&t.$dots.remove(),t.$prevArrow&&t.$prevArrow.length&&(t.$prevArrow.removeClass("slick-disabled slick-arrow slick-hidden").removeAttr("aria-hidden aria-disabled tabindex").css("display",""),t.htmlExpr.test(t.options.prevArrow)&&t.$prevArrow.remove()),t.$nextArrow&&t.$nextArrow.length&&(t.$nextArrow.removeClass("slick-disabled slick-arrow slick-hidden").removeAttr("aria-hidden aria-disabled tabindex").css("display",""),t.htmlExpr.test(t.options.nextArrow)&&t.$nextArrow.remove()),t.$slides&&(t.$slides.removeClass("slick-slide slick-active slick-center slick-visible slick-current").removeAttr("aria-hidden").removeAttr("data-slick-index").each(function(){i(this).attr("style",i(this).data("originalStyling"))}),t.$slideTrack.children(this.options.slide).detach(),t.$slideTrack.detach(),t.$list.detach(),t.$slider.append(t.$slides)),t.cleanUpRows(),t.$slider.removeClass("slick-slider"),t.$slider.removeClass("slick-initialized"),t.$slider.removeClass("slick-dotted"),t.unslicked=!0,e||t.$slider.trigger("destroy",[t])},e.prototype.disableTransition=function(i){var e=this,t={};t[e.transitionType]="",!1===e.options.fade?e.$slideTrack.css(t):e.$slides.eq(i).css(t)},e.prototype.fadeSlide=function(i,e){var t=this;!1===t.cssTransitions?(t.$slides.eq(i).css({zIndex:t.options.zIndex}),t.$slides.eq(i).animate({opacity:1},t.options.speed,t.options.easing,e)):(t.applyTransition(i),t.$slides.eq(i).css({opacity:1,zIndex:t.options.zIndex}),e&&setTimeout(function(){t.disableTransition(i),e.call()},t.options.speed))},e.prototype.fadeSlideOut=function(i){var e=this;!1===e.cssTransitions?e.$slides.eq(i).animate({opacity:0,zIndex:e.options.zIndex-2},e.options.speed,e.options.easing):(e.applyTransition(i),e.$slides.eq(i).css({opacity:0,zIndex:e.options.zIndex-2}))},e.prototype.filterSlides=e.prototype.slickFilter=function(i){var e=this;null!==i&&(e.$slidesCache=e.$slides,e.unload(),e.$slideTrack.children(this.options.slide).detach(),e.$slidesCache.filter(i).appendTo(e.$slideTrack),e.reinit())},e.prototype.focusHandler=function(){var e=this;e.$slider.off("focus.slick blur.slick").on("focus.slick blur.slick","*",function(t){t.stopImmediatePropagation();var o=i(this);setTimeout(function(){e.options.pauseOnFocus&&(e.focussed=o.is(":focus"),e.autoPlay())},0)})},e.prototype.getCurrent=e.prototype.slickCurrentSlide=function(){return this.currentSlide},e.prototype.getDotCount=function(){var i=this,e=0,t=0,o=0;if(!0===i.options.infinite)if(i.slideCount<=i.options.slidesToShow)++o;else for(;e<i.slideCount;)++o,e=t+i.options.slidesToScroll,t+=i.options.slidesToScroll<=i.options.slidesToShow?i.options.slidesToScroll:i.options.slidesToShow;else if(!0===i.options.centerMode)o=i.slideCount;else if(i.options.asNavFor)for(;e<i.slideCount;)++o,e=t+i.options.slidesToScroll,t+=i.options.slidesToScroll<=i.options.slidesToShow?i.options.slidesToScroll:i.options.slidesToShow;else o=1+Math.ceil((i.slideCount-i.options.slidesToShow)/i.options.slidesToScroll);return o-1},e.prototype.getLeft=function(i){var e,t,o,s,n=this,r=0;return n.slideOffset=0,t=n.$slides.first().outerHeight(!0),!0===n.options.infinite?(n.slideCount>n.options.slidesToShow&&(n.slideOffset=n.slideWidth*n.options.slidesToShow*-1,s=-1,!0===n.options.vertical&&!0===n.options.centerMode&&(2===n.options.slidesToShow?s=-1.5:1===n.options.slidesToShow&&(s=-2)),r=t*n.options.slidesToShow*s),n.slideCount%n.options.slidesToScroll!=0&&i+n.options.slidesToScroll>n.slideCount&&n.slideCount>n.options.slidesToShow&&(i>n.slideCount?(n.slideOffset=(n.options.slidesToShow-(i-n.slideCount))*n.slideWidth*-1,r=(n.options.slidesToShow-(i-n.slideCount))*t*-1):(n.slideOffset=n.slideCount%n.options.slidesToScroll*n.slideWidth*-1,r=n.slideCount%n.options.slidesToScroll*t*-1))):i+n.options.slidesToShow>n.slideCount&&(n.slideOffset=(i+n.options.slidesToShow-n.slideCount)*n.slideWidth,r=(i+n.options.slidesToShow-n.slideCount)*t),n.slideCount<=n.options.slidesToShow&&(n.slideOffset=0,r=0),!0===n.options.centerMode&&n.slideCount<=n.options.slidesToShow?n.slideOffset=n.slideWidth*Math.floor(n.options.slidesToShow)/2-n.slideWidth*n.slideCount/2:!0===n.options.centerMode&&!0===n.options.infinite?n.slideOffset+=n.slideWidth*Math.floor(n.options.slidesToShow/2)-n.slideWidth:!0===n.options.centerMode&&(n.slideOffset=0,n.slideOffset+=n.slideWidth*Math.floor(n.options.slidesToShow/2)),e=!1===n.options.vertical?i*n.slideWidth*-1+n.slideOffset:i*t*-1+r,!0===n.options.variableWidth&&(o=n.slideCount<=n.options.slidesToShow||!1===n.options.infinite?n.$slideTrack.children(".slick-slide").eq(i):n.$slideTrack.children(".slick-slide").eq(i+n.options.slidesToShow),e=!0===n.options.rtl?o[0]?-1*(n.$slideTrack.width()-o[0].offsetLeft-o.width()):0:o[0]?-1*o[0].offsetLeft:0,!0===n.options.centerMode&&(o=n.slideCount<=n.options.slidesToShow||!1===n.options.infinite?n.$slideTrack.children(".slick-slide").eq(i):n.$slideTrack.children(".slick-slide").eq(i+n.options.slidesToShow+1),e=!0===n.options.rtl?o[0]?-1*(n.$slideTrack.width()-o[0].offsetLeft-o.width()):0:o[0]?-1*o[0].offsetLeft:0,e+=(n.$list.width()-o.outerWidth())/2)),e},e.prototype.getOption=e.prototype.slickGetOption=function(i){return this.options[i]},e.prototype.getNavigableIndexes=function(){var i,e=this,t=0,o=0,s=[];for(!1===e.options.infinite?i=e.slideCount:(t=-1*e.options.slidesToScroll,o=-1*e.options.slidesToScroll,i=2*e.slideCount);t<i;)s.push(t),t=o+e.options.slidesToScroll,o+=e.options.slidesToScroll<=e.options.slidesToShow?e.options.slidesToScroll:e.options.slidesToShow;return s},e.prototype.getSlick=function(){return this},e.prototype.getSlideCount=function(){var e,t,o=this;return t=!0===o.options.centerMode?o.slideWidth*Math.floor(o.options.slidesToShow/2):0,!0===o.options.swipeToSlide?(o.$slideTrack.find(".slick-slide").each(function(s,n){if(n.offsetLeft-t+i(n).outerWidth()/2>-1*o.swipeLeft)return e=n,!1}),Math.abs(i(e).attr("data-slick-index")-o.currentSlide)||1):o.options.slidesToScroll},e.prototype.goTo=e.prototype.slickGoTo=function(i,e){this.changeSlide({data:{message:"index",index:parseInt(i)}},e)},e.prototype.init=function(e){var t=this;i(t.$slider).hasClass("slick-initialized")||(i(t.$slider).addClass("slick-initialized"),t.buildRows(),t.buildOut(),t.setProps(),t.startLoad(),t.loadSlider(),t.initializeEvents(),t.updateArrows(),t.updateDots(),t.checkResponsive(!0),t.focusHandler()),e&&t.$slider.trigger("init",[t]),!0===t.options.accessibility&&t.initADA(),t.options.autoplay&&(t.paused=!1,t.autoPlay())},e.prototype.initADA=function(){var e=this,t=Math.ceil(e.slideCount/e.options.slidesToShow),o=e.getNavigableIndexes().filter(function(i){return i>=0&&i<e.slideCount});e.$slides.add(e.$slideTrack.find(".slick-cloned")).attr({"aria-hidden":"true",tabindex:"-1"}).find("a, input, button, select").attr({tabindex:"-1"}),null!==e.$dots&&(e.$slides.not(e.$slideTrack.find(".slick-cloned")).each(function(t){var s=o.indexOf(t);i(this).attr({role:"tabpanel",id:"slick-slide"+e.instanceUid+t,tabindex:-1}),-1!==s&&i(this).attr({"aria-describedby":"slick-slide-control"+e.instanceUid+s})}),e.$dots.attr("role","tablist").find("li").each(function(s){var n=o[s];i(this).attr({role:"presentation"}),i(this).find("button").first().attr({role:"tab",id:"slick-slide-control"+e.instanceUid+s,"aria-controls":"slick-slide"+e.instanceUid+n,"aria-label":s+1+" of "+t,"aria-selected":null,tabindex:"-1"})}).eq(e.currentSlide).find("button").attr({"aria-selected":"true",tabindex:"0"}).end());for(var s=e.currentSlide,n=s+e.options.slidesToShow;s<n;s++)e.$slides.eq(s).attr("tabindex",0);e.activateADA()},e.prototype.initArrowEvents=function(){var i=this;!0===i.options.arrows&&i.slideCount>i.options.slidesToShow&&(i.$prevArrow.off("click.slick").on("click.slick",{message:"previous"},i.changeSlide),i.$nextArrow.off("click.slick").on("click.slick",{message:"next"},i.changeSlide),!0===i.options.accessibility&&(i.$prevArrow.on("keydown.slick",i.keyHandler),i.$nextArrow.on("keydown.slick",i.keyHandler)))},e.prototype.initDotEvents=function(){var e=this;!0===e.options.dots&&(i("li",e.$dots).on("click.slick",{message:"index"},e.changeSlide),!0===e.options.accessibility&&e.$dots.on("keydown.slick",e.keyHandler)),!0===e.options.dots&&!0===e.options.pauseOnDotsHover&&i("li",e.$dots).on("mouseenter.slick",i.proxy(e.interrupt,e,!0)).on("mouseleave.slick",i.proxy(e.interrupt,e,!1))},e.prototype.initSlideEvents=function(){var e=this;e.options.pauseOnHover&&(e.$list.on("mouseenter.slick",i.proxy(e.interrupt,e,!0)),e.$list.on("mouseleave.slick",i.proxy(e.interrupt,e,!1)))},e.prototype.initializeEvents=function(){var e=this;e.initArrowEvents(),e.initDotEvents(),e.initSlideEvents(),e.$list.on("touchstart.slick mousedown.slick",{action:"start"},e.swipeHandler),e.$list.on("touchmove.slick mousemove.slick",{action:"move"},e.swipeHandler),e.$list.on("touchend.slick mouseup.slick",{action:"end"},e.swipeHandler),e.$list.on("touchcancel.slick mouseleave.slick",{action:"end"},e.swipeHandler),e.$list.on("click.slick",e.clickHandler),i(document).on(e.visibilityChange,i.proxy(e.visibility,e)),!0===e.options.accessibility&&e.$list.on("keydown.slick",e.keyHandler),!0===e.options.focusOnSelect&&i(e.$slideTrack).children().on("click.slick",e.selectHandler),i(window).on("orientationchange.slick.slick-"+e.instanceUid,i.proxy(e.orientationChange,e)),i(window).on("resize.slick.slick-"+e.instanceUid,i.proxy(e.resize,e)),i("[draggable!=true]",e.$slideTrack).on("dragstart",e.preventDefault),i(window).on("load.slick.slick-"+e.instanceUid,e.setPosition),i(e.setPosition)},e.prototype.initUI=function(){var i=this;!0===i.options.arrows&&i.slideCount>i.options.slidesToShow&&(i.$prevArrow.show(),i.$nextArrow.show()),!0===i.options.dots&&i.slideCount>i.options.slidesToShow&&i.$dots.show()},e.prototype.keyHandler=function(i){var e=this;i.target.tagName.match("TEXTAREA|INPUT|SELECT")||(37===i.keyCode&&!0===e.options.accessibility?e.changeSlide({data:{message:!0===e.options.rtl?"next":"previous"}}):39===i.keyCode&&!0===e.options.accessibility&&e.changeSlide({data:{message:!0===e.options.rtl?"previous":"next"}}))},e.prototype.lazyLoad=function(){function e(e){i("img[data-lazy]",e).each(function(){var e=i(this),t=i(this).attr("data-lazy"),o=i(this).attr("data-srcset"),s=i(this).attr("data-sizes")||n.$slider.attr("data-sizes"),r=document.createElement("img");r.onload=function(){e.animate({opacity:0},100,function(){o&&(e.attr("srcset",o),s&&e.attr("sizes",s)),e.attr("src",t).animate({opacity:1},200,function(){e.removeAttr("data-lazy data-srcset data-sizes").removeClass("slick-loading")}),n.$slider.trigger("lazyLoaded",[n,e,t])})},r.onerror=function(){e.removeAttr("data-lazy").removeClass("slick-loading").addClass("slick-lazyload-error"),n.$slider.trigger("lazyLoadError",[n,e,t])},r.src=t})}var t,o,s,n=this;if(!0===n.options.centerMode?!0===n.options.infinite?s=(o=n.currentSlide+(n.options.slidesToShow/2+1))+n.options.slidesToShow+2:(o=Math.max(0,n.currentSlide-(n.options.slidesToShow/2+1)),s=n.options.slidesToShow/2+1+2+n.currentSlide):(o=n.options.infinite?n.options.slidesToShow+n.currentSlide:n.currentSlide,s=Math.ceil(o+n.options.slidesToShow),!0===n.options.fade&&(o>0&&o--,s<=n.slideCount&&s++)),t=n.$slider.find(".slick-slide").slice(o,s),"anticipated"===n.options.lazyLoad)for(var r=o-1,l=s,d=n.$slider.find(".slick-slide"),a=0;a<n.options.slidesToScroll;a++)r<0&&(r=n.slideCount-1),t=(t=t.add(d.eq(r))).add(d.eq(l)),r--,l++;e(t),n.slideCount<=n.options.slidesToShow?e(n.$slider.find(".slick-slide")):n.currentSlide>=n.slideCount-n.options.slidesToShow?e(n.$slider.find(".slick-cloned").slice(0,n.options.slidesToShow)):0===n.currentSlide&&e(n.$slider.find(".slick-cloned").slice(-1*n.options.slidesToShow))},e.prototype.loadSlider=function(){var i=this;i.setPosition(),i.$slideTrack.css({opacity:1}),i.$slider.removeClass("slick-loading"),i.initUI(),"progressive"===i.options.lazyLoad&&i.progressiveLazyLoad()},e.prototype.next=e.prototype.slickNext=function(){this.changeSlide({data:{message:"next"}})},e.prototype.orientationChange=function(){var i=this;i.checkResponsive(),i.setPosition()},e.prototype.pause=e.prototype.slickPause=function(){var i=this;i.autoPlayClear(),i.paused=!0},e.prototype.play=e.prototype.slickPlay=function(){var i=this;i.autoPlay(),i.options.autoplay=!0,i.paused=!1,i.focussed=!1,i.interrupted=!1},e.prototype.postSlide=function(e){var t=this;t.unslicked||(t.$slider.trigger("afterChange",[t,e]),t.animating=!1,t.slideCount>t.options.slidesToShow&&t.setPosition(),t.swipeLeft=null,t.options.autoplay&&t.autoPlay(),!0===t.options.accessibility&&(t.initADA(),t.options.focusOnChange&&i(t.$slides.get(t.currentSlide)).attr("tabindex",0).focus()))},e.prototype.prev=e.prototype.slickPrev=function(){this.changeSlide({data:{message:"previous"}})},e.prototype.preventDefault=function(i){i.preventDefault()},e.prototype.progressiveLazyLoad=function(e){e=e||1;var t,o,s,n,r,l=this,d=i("img[data-lazy]",l.$slider);d.length?(t=d.first(),o=t.attr("data-lazy"),s=t.attr("data-srcset"),n=t.attr("data-sizes")||l.$slider.attr("data-sizes"),(r=document.createElement("img")).onload=function(){s&&(t.attr("srcset",s),n&&t.attr("sizes",n)),t.attr("src",o).removeAttr("data-lazy data-srcset data-sizes").removeClass("slick-loading"),!0===l.options.adaptiveHeight&&l.setPosition(),l.$slider.trigger("lazyLoaded",[l,t,o]),l.progressiveLazyLoad()},r.onerror=function(){e<3?setTimeout(function(){l.progressiveLazyLoad(e+1)},500):(t.removeAttr("data-lazy").removeClass("slick-loading").addClass("slick-lazyload-error"),l.$slider.trigger("lazyLoadError",[l,t,o]),l.progressiveLazyLoad())},r.src=o):l.$slider.trigger("allImagesLoaded",[l])},e.prototype.refresh=function(e){var t,o,s=this;o=s.slideCount-s.options.slidesToShow,!s.options.infinite&&s.currentSlide>o&&(s.currentSlide=o),s.slideCount<=s.options.slidesToShow&&(s.currentSlide=0),t=s.currentSlide,s.destroy(!0),i.extend(s,s.initials,{currentSlide:t}),s.init(),e||s.changeSlide({data:{message:"index",index:t}},!1)},e.prototype.registerBreakpoints=function(){var e,t,o,s=this,n=s.options.responsive||null;if("array"===i.type(n)&&n.length){s.respondTo=s.options.respondTo||"window";for(e in n)if(o=s.breakpoints.length-1,n.hasOwnProperty(e)){for(t=n[e].breakpoint;o>=0;)s.breakpoints[o]&&s.breakpoints[o]===t&&s.breakpoints.splice(o,1),o--;s.breakpoints.push(t),s.breakpointSettings[t]=n[e].settings}s.breakpoints.sort(function(i,e){return s.options.mobileFirst?i-e:e-i})}},e.prototype.reinit=function(){var e=this;e.$slides=e.$slideTrack.children(e.options.slide).addClass("slick-slide"),e.slideCount=e.$slides.length,e.currentSlide>=e.slideCount&&0!==e.currentSlide&&(e.currentSlide=e.currentSlide-e.options.slidesToScroll),e.slideCount<=e.options.slidesToShow&&(e.currentSlide=0),e.registerBreakpoints(),e.setProps(),e.setupInfinite(),e.buildArrows(),e.updateArrows(),e.initArrowEvents(),e.buildDots(),e.updateDots(),e.initDotEvents(),e.cleanUpSlideEvents(),e.initSlideEvents(),e.checkResponsive(!1,!0),!0===e.options.focusOnSelect&&i(e.$slideTrack).children().on("click.slick",e.selectHandler),e.setSlideClasses("number"==typeof e.currentSlide?e.currentSlide:0),e.setPosition(),e.focusHandler(),e.paused=!e.options.autoplay,e.autoPlay(),e.$slider.trigger("reInit",[e])},e.prototype.resize=function(){var e=this;i(window).width()!==e.windowWidth&&(clearTimeout(e.windowDelay),e.windowDelay=window.setTimeout(function(){e.windowWidth=i(window).width(),e.checkResponsive(),e.unslicked||e.setPosition()},50))},e.prototype.removeSlide=e.prototype.slickRemove=function(i,e,t){var o=this;if(i="boolean"==typeof i?!0===(e=i)?0:o.slideCount-1:!0===e?--i:i,o.slideCount<1||i<0||i>o.slideCount-1)return!1;o.unload(),!0===t?o.$slideTrack.children().remove():o.$slideTrack.children(this.options.slide).eq(i).remove(),o.$slides=o.$slideTrack.children(this.options.slide),o.$slideTrack.children(this.options.slide).detach(),o.$slideTrack.append(o.$slides),o.$slidesCache=o.$slides,o.reinit()},e.prototype.setCSS=function(i){var e,t,o=this,s={};!0===o.options.rtl&&(i=-i),e="left"==o.positionProp?Math.ceil(i)+"px":"0px",t="top"==o.positionProp?Math.ceil(i)+"px":"0px",s[o.positionProp]=i,!1===o.transformsEnabled?o.$slideTrack.css(s):(s={},!1===o.cssTransitions?(s[o.animType]="translate("+e+", "+t+")",o.$slideTrack.css(s)):(s[o.animType]="translate3d("+e+", "+t+", 0px)",o.$slideTrack.css(s)))},e.prototype.setDimensions=function(){var i=this;!1===i.options.vertical?!0===i.options.centerMode&&i.$list.css({padding:"0px "+i.options.centerPadding}):(i.$list.height(i.$slides.first().outerHeight(!0)*i.options.slidesToShow),!0===i.options.centerMode&&i.$list.css({padding:i.options.centerPadding+" 0px"})),i.listWidth=i.$list.width(),i.listHeight=i.$list.height(),!1===i.options.vertical&&!1===i.options.variableWidth?(i.slideWidth=Math.ceil(i.listWidth/i.options.slidesToShow),i.$slideTrack.width(Math.ceil(i.slideWidth*i.$slideTrack.children(".slick-slide").length))):!0===i.options.variableWidth?i.$slideTrack.width(5e3*i.slideCount):(i.slideWidth=Math.ceil(i.listWidth),i.$slideTrack.height(Math.ceil(i.$slides.first().outerHeight(!0)*i.$slideTrack.children(".slick-slide").length)));var e=i.$slides.first().outerWidth(!0)-i.$slides.first().width();!1===i.options.variableWidth&&i.$slideTrack.children(".slick-slide").width(i.slideWidth-e)},e.prototype.setFade=function(){var e,t=this;t.$slides.each(function(o,s){e=t.slideWidth*o*-1,!0===t.options.rtl?i(s).css({position:"relative",right:e,top:0,zIndex:t.options.zIndex-2,opacity:0}):i(s).css({position:"relative",left:e,top:0,zIndex:t.options.zIndex-2,opacity:0})}),t.$slides.eq(t.currentSlide).css({zIndex:t.options.zIndex-1,opacity:1})},e.prototype.setHeight=function(){var i=this;if(1===i.options.slidesToShow&&!0===i.options.adaptiveHeight&&!1===i.options.vertical){var e=i.$slides.eq(i.currentSlide).outerHeight(!0);i.$list.css("height",e)}},e.prototype.setOption=e.prototype.slickSetOption=function(){var e,t,o,s,n,r=this,l=!1;if("object"===i.type(arguments[0])?(o=arguments[0],l=arguments[1],n="multiple"):"string"===i.type(arguments[0])&&(o=arguments[0],s=arguments[1],l=arguments[2],"responsive"===arguments[0]&&"array"===i.type(arguments[1])?n="responsive":void 0!==arguments[1]&&(n="single")),"single"===n)r.options[o]=s;else if("multiple"===n)i.each(o,function(i,e){r.options[i]=e});else if("responsive"===n)for(t in s)if("array"!==i.type(r.options.responsive))r.options.responsive=[s[t]];else{for(e=r.options.responsive.length-1;e>=0;)r.options.responsive[e].breakpoint===s[t].breakpoint&&r.options.responsive.splice(e,1),e--;r.options.responsive.push(s[t])}l&&(r.unload(),r.reinit())},e.prototype.setPosition=function(){var i=this;i.setDimensions(),i.setHeight(),!1===i.options.fade?i.setCSS(i.getLeft(i.currentSlide)):i.setFade(),i.$slider.trigger("setPosition",[i])},e.prototype.setProps=function(){var i=this,e=document.body.style;i.positionProp=!0===i.options.vertical?"top":"left","top"===i.positionProp?i.$slider.addClass("slick-vertical"):i.$slider.removeClass("slick-vertical"),void 0===e.WebkitTransition&&void 0===e.MozTransition&&void 0===e.msTransition||!0===i.options.useCSS&&(i.cssTransitions=!0),i.options.fade&&("number"==typeof i.options.zIndex?i.options.zIndex<3&&(i.options.zIndex=3):i.options.zIndex=i.defaults.zIndex),void 0!==e.OTransform&&(i.animType="OTransform",i.transformType="-o-transform",i.transitionType="OTransition",void 0===e.perspectiveProperty&&void 0===e.webkitPerspective&&(i.animType=!1)),void 0!==e.MozTransform&&(i.animType="MozTransform",i.transformType="-moz-transform",i.transitionType="MozTransition",void 0===e.perspectiveProperty&&void 0===e.MozPerspective&&(i.animType=!1)),void 0!==e.webkitTransform&&(i.animType="webkitTransform",i.transformType="-webkit-transform",i.transitionType="webkitTransition",void 0===e.perspectiveProperty&&void 0===e.webkitPerspective&&(i.animType=!1)),void 0!==e.msTransform&&(i.animType="msTransform",i.transformType="-ms-transform",i.transitionType="msTransition",void 0===e.msTransform&&(i.animType=!1)),void 0!==e.transform&&!1!==i.animType&&(i.animType="transform",i.transformType="transform",i.transitionType="transition"),i.transformsEnabled=i.options.useTransform&&null!==i.animType&&!1!==i.animType},e.prototype.setSlideClasses=function(i){var e,t,o,s,n=this;if(t=n.$slider.find(".slick-slide").removeClass("slick-active slick-center slick-current").attr("aria-hidden","true"),n.$slides.eq(i).addClass("slick-current"),!0===n.options.centerMode){var r=n.options.slidesToShow%2==0?1:0;e=Math.floor(n.options.slidesToShow/2),!0===n.options.infinite&&(i>=e&&i<=n.slideCount-1-e?n.$slides.slice(i-e+r,i+e+1).addClass("slick-active").attr("aria-hidden","false"):(o=n.options.slidesToShow+i,t.slice(o-e+1+r,o+e+2).addClass("slick-active").attr("aria-hidden","false")),0===i?t.eq(t.length-1-n.options.slidesToShow).addClass("slick-center"):i===n.slideCount-1&&t.eq(n.options.slidesToShow).addClass("slick-center")),n.$slides.eq(i).addClass("slick-center")}else i>=0&&i<=n.slideCount-n.options.slidesToShow?n.$slides.slice(i,i+n.options.slidesToShow).addClass("slick-active").attr("aria-hidden","false"):t.length<=n.options.slidesToShow?t.addClass("slick-active").attr("aria-hidden","false"):(s=n.slideCount%n.options.slidesToShow,o=!0===n.options.infinite?n.options.slidesToShow+i:i,n.options.slidesToShow==n.options.slidesToScroll&&n.slideCount-i<n.options.slidesToShow?t.slice(o-(n.options.slidesToShow-s),o+s).addClass("slick-active").attr("aria-hidden","false"):t.slice(o,o+n.options.slidesToShow).addClass("slick-active").attr("aria-hidden","false"));"ondemand"!==n.options.lazyLoad&&"anticipated"!==n.options.lazyLoad||n.lazyLoad()},e.prototype.setupInfinite=function(){var e,t,o,s=this;if(!0===s.options.fade&&(s.options.centerMode=!1),!0===s.options.infinite&&!1===s.options.fade&&(t=null,s.slideCount>s.options.slidesToShow)){for(o=!0===s.options.centerMode?s.options.slidesToShow+1:s.options.slidesToShow,e=s.slideCount;e>s.slideCount-o;e-=1)t=e-1,i(s.$slides[t]).clone(!0).attr("id","").attr("data-slick-index",t-s.slideCount).prependTo(s.$slideTrack).addClass("slick-cloned");for(e=0;e<o+s.slideCount;e+=1)t=e,i(s.$slides[t]).clone(!0).attr("id","").attr("data-slick-index",t+s.slideCount).appendTo(s.$slideTrack).addClass("slick-cloned");s.$slideTrack.find(".slick-cloned").find("[id]").each(function(){i(this).attr("id","")})}},e.prototype.interrupt=function(i){var e=this;i||e.autoPlay(),e.interrupted=i},e.prototype.selectHandler=function(e){var t=this,o=i(e.target).is(".slick-slide")?i(e.target):i(e.target).parents(".slick-slide"),s=parseInt(o.attr("data-slick-index"));s||(s=0),t.slideCount<=t.options.slidesToShow?t.slideHandler(s,!1,!0):t.slideHandler(s)},e.prototype.slideHandler=function(i,e,t){var o,s,n,r,l,d=null,a=this;if(e=e||!1,!(!0===a.animating&&!0===a.options.waitForAnimate||!0===a.options.fade&&a.currentSlide===i))if(!1===e&&a.asNavFor(i),o=i,d=a.getLeft(o),r=a.getLeft(a.currentSlide),a.currentLeft=null===a.swipeLeft?r:a.swipeLeft,!1===a.options.infinite&&!1===a.options.centerMode&&(i<0||i>a.getDotCount()*a.options.slidesToScroll))!1===a.options.fade&&(o=a.currentSlide,!0!==t?a.animateSlide(r,function(){a.postSlide(o)}):a.postSlide(o));else if(!1===a.options.infinite&&!0===a.options.centerMode&&(i<0||i>a.slideCount-a.options.slidesToScroll))!1===a.options.fade&&(o=a.currentSlide,!0!==t?a.animateSlide(r,function(){a.postSlide(o)}):a.postSlide(o));else{if(a.options.autoplay&&clearInterval(a.autoPlayTimer),s=o<0?a.slideCount%a.options.slidesToScroll!=0?a.slideCount-a.slideCount%a.options.slidesToScroll:a.slideCount+o:o>=a.slideCount?a.slideCount%a.options.slidesToScroll!=0?0:o-a.slideCount:o,a.animating=!0,a.$slider.trigger("beforeChange",[a,a.currentSlide,s]),n=a.currentSlide,a.currentSlide=s,a.setSlideClasses(a.currentSlide),a.options.asNavFor&&(l=(l=a.getNavTarget()).slick("getSlick")).slideCount<=l.options.slidesToShow&&l.setSlideClasses(a.currentSlide),a.updateDots(),a.updateArrows(),!0===a.options.fade)return!0!==t?(a.fadeSlideOut(n),a.fadeSlide(s,function(){a.postSlide(s)})):a.postSlide(s),void a.animateHeight();!0!==t?a.animateSlide(d,function(){a.postSlide(s)}):a.postSlide(s)}},e.prototype.startLoad=function(){var i=this;!0===i.options.arrows&&i.slideCount>i.options.slidesToShow&&(i.$prevArrow.hide(),i.$nextArrow.hide()),!0===i.options.dots&&i.slideCount>i.options.slidesToShow&&i.$dots.hide(),i.$slider.addClass("slick-loading")},e.prototype.swipeDirection=function(){var i,e,t,o,s=this;return i=s.touchObject.startX-s.touchObject.curX,e=s.touchObject.startY-s.touchObject.curY,t=Math.atan2(e,i),(o=Math.round(180*t/Math.PI))<0&&(o=360-Math.abs(o)),o<=45&&o>=0?!1===s.options.rtl?"left":"right":o<=360&&o>=315?!1===s.options.rtl?"left":"right":o>=135&&o<=225?!1===s.options.rtl?"right":"left":!0===s.options.verticalSwiping?o>=35&&o<=135?"down":"up":"vertical"},e.prototype.swipeEnd=function(i){var e,t,o=this;if(o.dragging=!1,o.swiping=!1,o.scrolling)return o.scrolling=!1,!1;if(o.interrupted=!1,o.shouldClick=!(o.touchObject.swipeLength>10),void 0===o.touchObject.curX)return!1;if(!0===o.touchObject.edgeHit&&o.$slider.trigger("edge",[o,o.swipeDirection()]),o.touchObject.swipeLength>=o.touchObject.minSwipe){switch(t=o.swipeDirection()){case"left":case"down":e=o.options.swipeToSlide?o.checkNavigable(o.currentSlide+o.getSlideCount()):o.currentSlide+o.getSlideCount(),o.currentDirection=0;break;case"right":case"up":e=o.options.swipeToSlide?o.checkNavigable(o.currentSlide-o.getSlideCount()):o.currentSlide-o.getSlideCount(),o.currentDirection=1}"vertical"!=t&&(o.slideHandler(e),o.touchObject={},o.$slider.trigger("swipe",[o,t]))}else o.touchObject.startX!==o.touchObject.curX&&(o.slideHandler(o.currentSlide),o.touchObject={})},e.prototype.swipeHandler=function(i){var e=this;if(!(!1===e.options.swipe||"ontouchend"in document&&!1===e.options.swipe||!1===e.options.draggable&&-1!==i.type.indexOf("mouse")))switch(e.touchObject.fingerCount=i.originalEvent&&void 0!==i.originalEvent.touches?i.originalEvent.touches.length:1,e.touchObject.minSwipe=e.listWidth/e.options.touchThreshold,!0===e.options.verticalSwiping&&(e.touchObject.minSwipe=e.listHeight/e.options.touchThreshold),i.data.action){case"start":e.swipeStart(i);break;case"move":e.swipeMove(i);break;case"end":e.swipeEnd(i)}},e.prototype.swipeMove=function(i){var e,t,o,s,n,r,l=this;return n=void 0!==i.originalEvent?i.originalEvent.touches:null,!(!l.dragging||l.scrolling||n&&1!==n.length)&&(e=l.getLeft(l.currentSlide),l.touchObject.curX=void 0!==n?n[0].pageX:i.clientX,l.touchObject.curY=void 0!==n?n[0].pageY:i.clientY,l.touchObject.swipeLength=Math.round(Math.sqrt(Math.pow(l.touchObject.curX-l.touchObject.startX,2))),r=Math.round(Math.sqrt(Math.pow(l.touchObject.curY-l.touchObject.startY,2))),!l.options.verticalSwiping&&!l.swiping&&r>4?(l.scrolling=!0,!1):(!0===l.options.verticalSwiping&&(l.touchObject.swipeLength=r),t=l.swipeDirection(),void 0!==i.originalEvent&&l.touchObject.swipeLength>4&&(l.swiping=!0,i.preventDefault()),s=(!1===l.options.rtl?1:-1)*(l.touchObject.curX>l.touchObject.startX?1:-1),!0===l.options.verticalSwiping&&(s=l.touchObject.curY>l.touchObject.startY?1:-1),o=l.touchObject.swipeLength,l.touchObject.edgeHit=!1,!1===l.options.infinite&&(0===l.currentSlide&&"right"===t||l.currentSlide>=l.getDotCount()&&"left"===t)&&(o=l.touchObject.swipeLength*l.options.edgeFriction,l.touchObject.edgeHit=!0),!1===l.options.vertical?l.swipeLeft=e+o*s:l.swipeLeft=e+o*(l.$list.height()/l.listWidth)*s,!0===l.options.verticalSwiping&&(l.swipeLeft=e+o*s),!0!==l.options.fade&&!1!==l.options.touchMove&&(!0===l.animating?(l.swipeLeft=null,!1):void l.setCSS(l.swipeLeft))))},e.prototype.swipeStart=function(i){var e,t=this;if(t.interrupted=!0,1!==t.touchObject.fingerCount||t.slideCount<=t.options.slidesToShow)return t.touchObject={},!1;void 0!==i.originalEvent&&void 0!==i.originalEvent.touches&&(e=i.originalEvent.touches[0]),t.touchObject.startX=t.touchObject.curX=void 0!==e?e.pageX:i.clientX,t.touchObject.startY=t.touchObject.curY=void 0!==e?e.pageY:i.clientY,t.dragging=!0},e.prototype.unfilterSlides=e.prototype.slickUnfilter=function(){var i=this;null!==i.$slidesCache&&(i.unload(),i.$slideTrack.children(this.options.slide).detach(),i.$slidesCache.appendTo(i.$slideTrack),i.reinit())},e.prototype.unload=function(){var e=this;i(".slick-cloned",e.$slider).remove(),e.$dots&&e.$dots.remove(),e.$prevArrow&&e.htmlExpr.test(e.options.prevArrow)&&e.$prevArrow.remove(),e.$nextArrow&&e.htmlExpr.test(e.options.nextArrow)&&e.$nextArrow.remove(),e.$slides.removeClass("slick-slide slick-active slick-visible slick-current").attr("aria-hidden","true").css("width","")},e.prototype.unslick=function(i){var e=this;e.$slider.trigger("unslick",[e,i]),e.destroy()},e.prototype.updateArrows=function(){var i=this;Math.floor(i.options.slidesToShow/2),!0===i.options.arrows&&i.slideCount>i.options.slidesToShow&&!i.options.infinite&&(i.$prevArrow.removeClass("slick-disabled").attr("aria-disabled","false"),i.$nextArrow.removeClass("slick-disabled").attr("aria-disabled","false"),0===i.currentSlide?(i.$prevArrow.addClass("slick-disabled").attr("aria-disabled","true"),i.$nextArrow.removeClass("slick-disabled").attr("aria-disabled","false")):i.currentSlide>=i.slideCount-i.options.slidesToShow&&!1===i.options.centerMode?(i.$nextArrow.addClass("slick-disabled").attr("aria-disabled","true"),i.$prevArrow.removeClass("slick-disabled").attr("aria-disabled","false")):i.currentSlide>=i.slideCount-1&&!0===i.options.centerMode&&(i.$nextArrow.addClass("slick-disabled").attr("aria-disabled","true"),i.$prevArrow.removeClass("slick-disabled").attr("aria-disabled","false")))},e.prototype.updateDots=function(){var i=this;null!==i.$dots&&(i.$dots.find("li").removeClass("slick-active").end(),i.$dots.find("li").eq(Math.floor(i.currentSlide/i.options.slidesToScroll)).addClass("slick-active"))},e.prototype.visibility=function(){var i=this;i.options.autoplay&&(document[i.hidden]?i.interrupted=!0:i.interrupted=!1)},i.fn.slick=function(){var i,t,o=this,s=arguments[0],n=Array.prototype.slice.call(arguments,1),r=o.length;for(i=0;i<r;i++)if("object"==typeof s||void 0===s?o[i].slick=new e(o[i],s):t=o[i].slick[s].apply(o[i].slick,n),void 0!==t)return t;return o}});
+var gl,
+glide = {
+	settings: {
 
-// code
-accordions.init();
-cookieNotice.init();
-notification.init();
-randomQuote.init();
-slider.init();
+	},
+	init: function() {
+		gl = this.settings;
+		this.bindUIActions();
+		console.log('glide loaded!');
+	},
+	bindUIActions: function() {
+		var glide = new Glide('.glide', {
+			type: 'carousel',
+			startAt: 0,
+			perView: 3
+		})
+		glide.mount();
+	}
+};
+
+document.addEventListener("DOMContentLoaded", function() {
+
+    'use strict';
+
+    // code
+    accordions.init();
+    cookieNotice.init();
+    notification.init();
+    randomQuote.init();
+    glide.init();
+    rellax.init();
+    aos.init();
 
 });
-
-})(jQuery, window, document);

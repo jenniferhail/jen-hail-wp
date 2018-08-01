@@ -7,9 +7,6 @@ randomQuote = {
 	init: function() {
 		rq = this.settings;
 		this.bindUIActions();
-		// Optional - Expose scoped vars to global $. Use in console with $.expose
-		$.expose.rq = rq;
-		$.expose.randomQuote = randomQuote;
 		console.log('randomQuote loaded!');
 	},
 	bindUIActions: function() {

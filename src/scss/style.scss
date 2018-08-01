@@ -9,17 +9,18 @@
 //----------------------------------*\
 // SCSS BITTERS
 //----------------------------------*/
-// required loads vars requior
-// bitters to function without bourbon.
+// Loading bourbon dependancies
 @import 'bitters/required';
 @import 'bitters/base';
 
 //----------------------------------*\
 // VENDOR
 //----------------------------------*/
-// Load external sass (i.e. slick or
-// fancybox)
+// Load external sass
 @import 'vendor/external';
+@import 'vendor/glidejs/glide.core';
+@import 'vendor/glidejs/glide.theme';
+@import 'vendor/aos/aos';
 
 //----------------------------------*\
 // SCSS MIXINS
