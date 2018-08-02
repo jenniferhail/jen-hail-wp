@@ -5,12 +5,12 @@
 *(if your site requires dedicated hosting, you will want to replace the above IP )*
 2.  Select “Add-on Domains” and set a domain via cPanel http://72.52.173.139/cpanel 
 *(Example: client.mightily.com)*
-3. Point the add-on domain to pubic_html/dev/web
+3. Point the add-on domain to pubic_html/staging/web
 4. Create a database and a database user
 *(database: wpdb)
 (database user: dbuser)*
 5. Add the office IP 50.59.42.134 to "Remote MYSQL"
-*(This allows your local WP project to use the remote database i.e. the staging area)*
+*(This allows your local WP project to use the remote database)*
 
 ### Bedrock Setup
 You will want to install Bedrock on both local and hosting enviroments, follow the Bedrock instructions found at:
@@ -22,57 +22,51 @@ You can find more information on bedrock at:
 https://roots.io/bedrock/
 
 ### Local Setup - (MAMP PRO)
-1. Add a new host to MAMP PRO *i.e. local.client.com*
-2. Point it to the [project-name]/web
-3. Update virtual hosts
-`/Applications/MAMP/conf/apache/extra/httpd-vhosts.conf`
-4. Clone your project repo into
+1. Add a new host to MAMP PRO *i.e. client.local*
+2. Point it to [project-name]/web
+3. Clone your project repo into
 `/Users/[user]/[project]/web/app/themes/mightily/`
 
-**vhost example**
-```php
-<VirtualHost *:80>
-    DocumentRoot "/Users/[user]/[project]/web"
-    ServerName local.[project-name].com
-</VirtualHost>
-```
+## BitBucket Autodeploy Setup
 
-### BitBucket Autodeploy Setup
+###Create SSH Key
+1. SSH into the server and run `ssh-keygen`, leaving the name and password blank
+2. Run `cat ~/.ssh/id_rsa.pub` then copy and paste the key
+3. Add your key to the repo under Settings > Access keys
 
-3. SSH into the server and run `ssh-keygen`, leaving the name and password blank
-4. Run `cat ~/.ssh/id_rsa.pub | pbcopy` and paste in Avatar > Bitbucket Settings > SSH key
-5. Run `cd ~ then git clone --mirror git@bitbucket.org:<username>/<repo-name>.git`
-6. Run `cd ~/<repo-name>.git`
-7. Run `GIT_WORK_TREE=/home/<username>/public_html/dev git checkout -f master`
-8. Place the autodeploy.php script in the /public_html directory and update the script variables to point to your theme folder
-9. In the repo, add a webhook and use `http://72.52.173.139/~<username>/autodeploy.php`
+###Clone the repo on the server
+1. Run `cd ~ then git clone --mirror git@bitbucket.org:<username>/<repo-name>.git`
+2. Run `cd ~/<repo-name>.git`
+3. Run `GIT_WORK_TREE=/home/<username>/public_html/staging/web/app/themes/mightily/ git checkout -f master`
+4. Place the autodeploy.php script in the /public_html directory and update the two variables to point to your .git directory in the home folder and theme folder
+5. In the Bitbucket repo, add a webhook Settings > Webhook and use `http://72.52.173.139/~<username>/autodeploy.php`
 
-This will automatically deploy any changes you make to the theme in your theme directory.
+Now, when you push changes to the repo, autodeploy will automatically pull  changes to the theme in your theme directory.
 
-### Troubleshooting
+## Troubleshooting
 If you visit the site in a browser and you see a 500 error, you might need to update the directory and file permissions via SSH
 
-#### Change Permissions on Directories Recursively
+### Change Permissions on Directories Recursively
 `find /path/to/base/dir -type d -exec chmod 755 {} +`
 
-#### Change Permissions on Files Recursively
+### Change Permissions on Files Recursively
 `find /path/to/base/dir -type f -exec chmod 644 {} +`
 
-#### Test SSH connectivity to bitbucket
+### Test SSH connectivity to bitbucket
 `ssh -Tv git@bitbucket.org`
 
-## Server Root (Just before launch)
-The following insutrctions outline what needs to happen just before a site launched to change the web root of the user account (on the server)
+## Server Root (pre-launch)
+The following  outlines what is required to happen just before a site launches in order to change the web root of the user account (on the server).
 
-Update document root for cpanel as well as apache. Need to edit/create two files
-/usr/local/apache/conf/userdata/USERNAME/DOMAIN.COM/config.conf
-/var/cpanel/userdata/USERNAME/DOMAIN.COM
+1. Update document root for the cpanel user as well as apache. Need to edit/create two files:
+`/usr/local/apache/conf/userdata/USERNAME/DOMAIN.COM/config.conf`
+`/var/cpanel/userdata/USERNAME/DOMAIN.COM`
 
-Scan config file directories for apache configuration
-/scripts/ensure_vhost_includes --all-users
+2. Scan config file directories for apache configuration:
+Run `/scripts/ensure_vhost_includes --all-users`
 
-then run /scripts/rebuildhttpdconf to rebuild conf file
-then run service httpd restart to restart apache
+3. Run `/scripts/rebuildhttpdconf` to rebuild conf file
+then run `service httpd restart` to restart apache
 
 ## Layouts
 Layouts are the building blocks that allow publishers to stack content that do unique things.
