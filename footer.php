@@ -72,15 +72,5 @@
 
 <?php wp_footer(); ?>
 
-<!-- Global site tag (gtag.js) - Google Analytics -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=UA-90508119-1"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-
-  gtag('config', '<?php the_field('ga_tracking_id', 'option'); ?>');
-</script>
-
 </body>
 </html>
