@@ -9,11 +9,11 @@ glide = {
 		console.log('glide loaded!');
 	},
 	bindUIActions: function() {
-		var glide = new Glide('.glide', {
-			type: 'carousel',
-			startAt: 0,
-			perView: 3
-		})
-		glide.mount();
+		// var glide = new Glide('.glide', {
+		// 	type: 'carousel',
+		// 	startAt: 0,
+		// 	perView: 3
+		// })
+		// glide.mount();
 	}
 };

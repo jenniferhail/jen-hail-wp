@@ -1,83 +1,367 @@
-var gulp = require('gulp'),
-    sass = require('gulp-sass'),
-    browserSync = require('browser-sync'),
-    autoprefixer = require('gulp-autoprefixer'),
-    uglify = require('gulp-uglify'),
-    header  = require('gulp-header'),
-    rename = require('gulp-rename'),
-    cssnano = require('gulp-cssnano'),
-    concat = require('gulp-concat'),
-    gutil = require('gulp-util'),
-    sourcemaps = require('gulp-sourcemaps'),
-    package = require('./package.json');
+/**
+ * Settings
+ * Turn on/off build features
+ */
 
-var banner = [
-  '/*!\n' +
-  ' * <%= package.name %>\n' +
-  ' * <%= package.title %>\n' +
-  ' * <%= package.url %>\n' +
-  ' * @author <%= package.author %>\n' +
-  ' * @version <%= package.version %>\n' +
-  ' * Copyright ' + new Date().getFullYear() + '. <%= package.license %> licensed.\n' +
-  ' */',
-  '\n'
-].join('');
+var settings = {
+	clean: true,
+	scripts: true,
+	polyfills: true,
+	styles: true,
+    images: true,
+	svgs: true,
+    includes: true,
+	copy: false,
+	reload: true
+};
 
-var jsVendorFiles = [
-    'node_modules/rellax/rellax.js',
-    'node_modules/@glidejs/glide/dist/glide.js',
-    'node_modules/aos/dist/aos.js'
-];
+/**
+ * Paths to project folders
+ */
 
-var cssFiles = ['src/scss/style.scss'],
-    cssDest = 'app/assets/css';
+var paths = {
+	input: 'src/',
+	output: 'dist/',
+	scripts: {
+		input: 'src/js/*',
+		polyfills: '.polyfill.js',
+		output: 'dist/assets/js/'
+	},
+	styles: {
+		input: 'src/scss/**/*.{scss,sass}',
+		output: 'dist/assets/css/'
+	},
+    images: {
+		input: 'src/img/*.png',
+		output: 'dist/assets/img/'
+	},
+	svgs: {
+		input: 'src/svg/*.svg',
+		output: 'dist/assets/svg/'
+	},
+    html: {
+		input: 'src/html/*.html',
+		output: 'dist/'
+	},
+	copy: {
+		input: 'src/copy/**/*',
+		output: 'dist/'
+	},
+	reload: './dist/'
+};
 
-var jsCoreFiles = ['src/js/layouts/*.js', 'src/js/scripts.js'],
-    jsDest = 'app/assets/js';
 
-var jsFiles = jsVendorFiles.concat(jsCoreFiles);
+/**
+ * Template for banner to add to file headers
+ */
 
-gulp.task('css', function () {
-    gulp.src(cssFiles)
-    .pipe(sourcemaps.init())
-    .pipe(sass({errLogToConsole: true}))
-    .pipe(autoprefixer('last 4 version'))
-    .pipe(gulp.dest(cssDest))
-    .pipe(cssnano())
-    .pipe(rename({ suffix: '.min' }))
-    .pipe(header(banner, { package : package }))
-    .pipe(sourcemaps.write(''))
-    .pipe(gulp.dest(cssDest))
-    .pipe(browserSync.reload({stream:true}));
-});
+var banner = {
+	full:
+		'/*!\n' +
+		' * <%= package.name %> v<%= package.version %>\n' +
+		' * <%= package.description %>\n' +
+		' * (c) ' + new Date().getFullYear() + ' <%= package.author.name %>\n' +
+		' * <%= package.license %> License\n' +
+		' * <%= package.repository.url %>\n' +
+		' */\n\n',
+	min:
+		'/*!' +
+		' <%= package.name %> v<%= package.version %>' +
+		' | (c) ' + new Date().getFullYear() + ' <%= package.author.name %>' +
+		' | <%= package.license %> License' +
+		' | <%= package.repository.url %>' +
+		' */\n'
+};
 
-gulp.task('js',function(){
-  gulp.src(jsFiles)
-    .pipe(sourcemaps.init())
-    .pipe(concat('scripts.js'))
-    .pipe(header(banner, { package : package }))
-    .pipe(gulp.dest(jsDest))
-    .pipe(uglify().on('error', gutil.log))
-    .pipe(header(banner, { package : package }))
-    .pipe(rename({ suffix: '.min' }))
-    .pipe(sourcemaps.write(''))
-    .pipe(gulp.dest(jsDest))
-    .pipe(browserSync.reload({stream:true, once: true}));
-});
 
-gulp.task('browser-sync', function() {
-    browserSync.init(null, {
-        server: {
-            baseDir: "app"
-        }
-    });
-});
-gulp.task('bs-reload', function () {
-    browserSync.reload();
-});
+/**
+ * Gulp Packages
+ */
 
-gulp.task('default', ['css', 'js', 'browser-sync'], function () {
-    gulp.watch("src/scss/*/*.scss", ['css']);
-    gulp.watch("src/js/**/*.js", ['js']);
-    gulp.watch("app/*.html", ['bs-reload']);
-});
+// General
+var {gulp, src, dest, watch, series, parallel} = require('gulp');
+var del = require('del');
+var flatmap = require('gulp-flatmap');
+var lazypipe = require('lazypipe');
+var rename = require('gulp-rename');
+var header = require('gulp-header');
+var package = require('./package.json');
+
+// Scripts
+var jshint = require('gulp-jshint');
+var stylish = require('jshint-stylish');
+var concat = require('gulp-concat');
+var uglify = require('gulp-uglify');
+var optimizejs = require('gulp-optimize-js');
+
+// Styles
+var sass = require('gulp-sass');
+var prefix = require('gulp-autoprefixer');
+var minify = require('gulp-cssnano');
+
+// Images
+var imagemin = require('gulp-imagemin');
+
+// SVGs
+var svgmin = require('gulp-svgmin');
+
+// Include Files
+var fileinclude = require('gulp-file-include');
+
+// BrowserSync
+var browserSync = require('browser-sync');
+
+
+/**
+ * Gulp Tasks
+ */
+
+// Remove pre-existing content from output folders
+var cleanDist = function (done) {
+
+	// Make sure this feature is activated before running
+	if (!settings.clean) return done();
+
+	// Clean the dist folder
+	del.sync([
+		paths.output
+	]);
+
+	// Signal completion
+	return done();
+
+};
+
+// Repeated JavaScript tasks
+var jsTasks = lazypipe()
+	.pipe(header, banner.full, {package: package})
+	.pipe(optimizejs)
+	.pipe(dest, paths.scripts.output)
+	.pipe(rename, {suffix: '.min'})
+	.pipe(uglify)
+	.pipe(optimizejs)
+	.pipe(header, banner.min, {package: package})
+	.pipe(dest, paths.scripts.output);
+
+// Lint, minify, and concatenate scripts
+var buildScripts = function (done) {
+
+	// Make sure this feature is activated before running
+	if (!settings.scripts) return done();
+
+	// Run tasks on script files
+	src(paths.scripts.input)
+		.pipe(flatmap(function(stream, file) {
+
+			// If the file is a directory
+			if (file.isDirectory()) {
+
+				// Setup a suffix variable
+				var suffix = '';
+
+				// If separate polyfill files enabled
+				if (settings.polyfills) {
+
+					// Update the suffix
+					suffix = '.polyfills';
+
+					// Grab files that aren't polyfills, concatenate them, and process them
+					src([file.path + '/*.js', '!' + file.path + '/*' + paths.scripts.polyfills])
+						.pipe(concat(file.relative + '.js'))
+						.pipe(jsTasks());
+
+				}
+
+				// Grab all files and concatenate them
+				// If separate polyfills enabled, this will have .polyfills in the filename
+				src(file.path + '/*.js')
+					.pipe(concat(file.relative + suffix + '.js'))
+					.pipe(jsTasks());
+
+				return stream;
+
+			}
+
+			// Otherwise, process the file
+			return stream.pipe(jsTasks());
+
+		}));
+
+	// Signal completion
+	done();
+
+};
+
+// Lint scripts
+var lintScripts = function (done) {
+
+	// Make sure this feature is activated before running
+	if (!settings.scripts) return done();
+
+	// Lint scripts
+	src(paths.scripts.input)
+		.pipe(jshint())
+		.pipe(jshint.reporter('jshint-stylish'));
+
+	// Signal completion
+	done();
+
+};
+
+// Process, lint, and minify Sass files
+var buildStyles = function (done) {
+
+	// Make sure this feature is activated before running
+	if (!settings.styles) return done();
+
+	// Run tasks on all Sass files
+	src(paths.styles.input)
+		.pipe(sass({
+			outputStyle: 'expanded',
+			sourceComments: true
+		}))
+		.pipe(prefix({
+			browsers: ['last 2 version', '> 0.25%'],
+			cascade: true,
+			remove: true
+		}))
+		.pipe(header(banner.full, { package : package }))
+		.pipe(dest(paths.styles.output))
+		.pipe(rename({suffix: '.min'}))
+		.pipe(minify({
+			discardComments: {
+				removeAll: true
+			}
+		}))
+		.pipe(header(banner.min, { package : package }))
+		.pipe(dest(paths.styles.output));
+
+	// Signal completion
+	done();
+
+};
+
+// Optimize Images
+var compressImages = function (done) {
+
+	// Make sure this feature is activated before running
+	if (!settings.images) return done();
+
+	// Optimize image files
+	src(paths.images.input)
+		.pipe(imagemin())
+		.pipe(dest(paths.images.output));
+
+	// Signal completion
+	done();
+
+};
+
+// Optimize SVG files
+var buildSVGs = function (done) {
+
+	// Make sure this feature is activated before running
+	if (!settings.svgs) return done();
+
+	// Optimize SVG files
+	src(paths.svgs.input)
+		.pipe(svgmin())
+		.pipe(dest(paths.svgs.output));
+
+	// Signal completion
+	done();
+
+};
+
+// Include files within files
+var includes = function (done) {
+
+	// Make sure this feature is activated before running
+	if (!settings.includes) return done();
+
+	// Including files
+    src(paths.html.input)
+        .pipe(fileinclude({
+            prefix: '@@',
+            basepath: '@file'
+        }))
+        .pipe(dest(paths.html.output));
+
+	// Signal completion
+	done();
+
+};
+
+// Copy static files into output folder
+var copyFiles = function (done) {
+
+	// Make sure this feature is activated before running
+	if (!settings.copy) return done();
+
+	// Copy static files
+	src(paths.copy.input)
+		.pipe(dest(paths.copy.output));
+
+	// Signal completion
+	done();
+
+};
+
+// Watch for changes to the src directory
+var startServer = function (done) {
+
+	// Make sure this feature is activated before running
+	if (!settings.reload) return done();
+
+	// Initialize BrowserSync
+	browserSync.init({
+		server: {
+			baseDir: paths.reload
+		}
+	});
+
+	// Signal completion
+	done();
+
+};
+
+// Reload the browser when files change
+var reloadBrowser = function (done) {
+	if (!settings.reload) return done();
+	browserSync.reload();
+	done();
+};
+
+// Watch for changes
+var watchSource = function (done) {
+	watch(paths.input, series(exports.default, reloadBrowser));
+	done();
+};
+
+
+/**
+ * Export Tasks
+ */
+
+// Default task
+// gulp
+exports.default = series(
+	cleanDist,
+	parallel(
+		buildScripts,
+		lintScripts,
+		buildStyles,
+        compressImages,
+		buildSVGs,
+        includes,
+		copyFiles
+	)
+);
+
+// Watch and reload
+// gulp watch
+exports.watch = series(
+	exports.default,
+	startServer,
+	watchSource
+);

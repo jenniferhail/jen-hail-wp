@@ -1,8 +1,6 @@
 document.addEventListener("DOMContentLoaded", function() {
-
     'use strict';
 
-    // code
     accordions.init();
     cookieNotice.init();
     notification.init();
@@ -10,5 +8,4 @@ document.addEventListener("DOMContentLoaded", function() {
     glide.init();
     rellax.init();
     aos.init();
-
 });
