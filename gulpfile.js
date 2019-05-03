@@ -345,7 +345,7 @@ var watchSource = function (done) {
 
 // Default task
 // gulp
-exports.default = series(
+exports.build = series(
 	cleanDist,
 	parallel(
 		buildScripts,
@@ -360,8 +360,8 @@ exports.default = series(
 
 // Watch and reload
 // gulp watch
-exports.watch = series(
-	exports.default,
+exports.default = series(
+	exports.build,
 	startServer,
 	watchSource
 );
