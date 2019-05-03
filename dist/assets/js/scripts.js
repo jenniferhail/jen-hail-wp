@@ -6,7 +6,7 @@
  * https://bitbucket.org/mightily/theme-development/src/master/
  */
 
-document.addEventListener("DOMContentLoaded", (function() {
+$( document ).ready((function() {
     'use strict';
 
 	var app = new Vue({

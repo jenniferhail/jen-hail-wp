@@ -937,7 +937,7 @@ blockquote {
 }
 
 /* line 4, src/scss/bitters/_style-guide.scss */
-.title {
+.section-title {
   border-bottom: 1px solid #333;
 }
 
@@ -3051,12 +3051,11 @@ body[data-aos-easing="ease-in-out-quart"] [data-aos], [data-aos][data-aos][data-
 }
 
 /* line 3, src/scss/layouts/_hero.scss */
-.layout.hero .background {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
+.layout.hero .background,
+.layout.hero .image {
+  width: 600px;
+  height: 400px;
+  margin: auto;
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
@@ -3064,19 +3063,8 @@ body[data-aos-easing="ease-in-out-quart"] [data-aos], [data-aos][data-aos][data-
 }
 
 /* line 13, src/scss/layouts/_hero.scss */
-.layout.hero .background:after {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: #000000;
-  opacity: 0.5;
-}
-
-/* line 24, src/scss/layouts/_hero.scss */
 .layout.hero .content {
+  position: relative;
   display: -webkit-box;
   display: -ms-flexbox;
   display: flex;
@@ -3090,10 +3078,59 @@ body[data-aos-easing="ease-in-out-quart"] [data-aos], [data-aos][data-aos][data-
   -webkit-box-direction: normal;
       -ms-flex-direction: column;
           flex-direction: column;
-  position: relative;
-  height: 60vh;
+  padding: 40px 0;
+  text-align: center;
   z-index: 1;
-  color: #ffffff;
+}
+
+/* line 2, src/scss/layouts/_listing.scss */
+.layout.listing .title {
+  padding: 10px;
+  margin-bottom: 0;
+}
+
+/* line 7, src/scss/layouts/_listing.scss */
+.layout.listing.grid .item-list {
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-pack: justify;
+      -ms-flex-pack: justify;
+          justify-content: space-between;
+  -ms-flex-wrap: wrap;
+      flex-wrap: wrap;
+}
+
+/* line 12, src/scss/layouts/_listing.scss */
+.layout.listing.grid .item {
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-pack: center;
+      -ms-flex-pack: center;
+          justify-content: center;
+  -webkit-box-align: center;
+      -ms-flex-align: center;
+          align-items: center;
+  height: 320px;
+  width: 260px;
+  margin-bottom: 40px;
+  border: 1px solid #000;
+}
+
+/* line 23, src/scss/layouts/_listing.scss */
+.layout.listing.list .item {
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-pack: center;
+      -ms-flex-pack: center;
+          justify-content: center;
+  -webkit-box-align: center;
+      -ms-flex-align: center;
+          align-items: center;
+  margin-bottom: 40px;
+  border: 1px solid #000;
 }
 
 /* line 2, src/scss/layouts/_slider.scss */

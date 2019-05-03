@@ -1,0 +1,31 @@
+.layout.listing {
+    .title {
+        padding: 10px;
+        margin-bottom: 0;
+    }
+    &.grid {
+        .item-list {
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+        }
+        .item {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 320px;
+            width: 260px;
+            margin-bottom: 40px;
+            border: 1px solid #000;
+        }
+    }
+    &.list {
+        .item {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 40px;
+            border: 1px solid #000;
+        }
+    }
+}
