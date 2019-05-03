@@ -1,10 +1,24 @@
 <?php
     // =========================================================================
-    // FUNCTIONS
+    // HELPER FUNCTIONS
     // =========================================================================
-    include(locate_template('functions/wp-helpers.php'));
-    include(locate_template('functions/wp-theme-resources.php'));
-    include(locate_template('functions/wp-post-types.php'));
-    include(locate_template('functions/wp-tweaks.php'));
-    include(locate_template('functions/wp-acf.php'));
-?>
+    require_once dirname(__FILE__) . '/functions/helpers.php';
+
+    // =========================================================================
+    // WORDPRESS HOOKS AND FUNCTIONS
+    // =========================================================================
+    require_once dirname(__FILE__) . '/functions/wp/base.php';
+    require_once dirname(__FILE__) . '/functions/wp-hooks.php';
+
+    // =========================================================================
+    // ADVANCED CUSTOM FIELDS
+    // =========================================================================
+    require_once dirname(__FILE__) . '/functions/acf/options.php';
+
+    // =========================================================================
+    // CUSTOM POST TYPES
+    // =========================================================================
+    require_once dirname(__FILE__) . '/functions/cpt/cpt-events.php';
+    require_once dirname(__FILE__) . '/functions/cpt/cpt-faqs.php';
+    require_once dirname(__FILE__) . '/functions/cpt/cpt-products.php';
+    require_once dirname(__FILE__) . '/functions/cpt/cpt-recipes.php';
