@@ -1,3 +1,10 @@
+//=require layouts/accordions.js
+//=require layouts/cookie-notice.js
+//=require layouts/notification.js
+//=require layouts/random-quote.js
+//=require layouts/slider.js
+//=require layouts/style-guide.js
+
 $( document ).ready(function() {
     'use strict';
 
@@ -8,14 +15,10 @@ $( document ).ready(function() {
         }
     });
 
-	// $('select').selectmenu();
-
     accordions.init();
     cookieNotice.init();
     notification.init();
     randomQuote.init();
     glide.init();
-    rellax.init();
-    aos.init();
 	styleGuide.init();
 });

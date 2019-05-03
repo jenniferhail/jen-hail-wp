@@ -6,10 +6,10 @@
 var settings = {
 	clean: true,
 	scripts: true,
-	polyfills: true,
+	polyfills: false,
 	styles: true,
-    images: true,
-	svgs: true,
+    images: false,
+	svgs: false,
     includes: true,
 	copy: false,
 	reload: true
@@ -23,7 +23,7 @@ var paths = {
 	input: 'src/',
 	output: 'dist/',
 	scripts: {
-		input: 'src/js/*',
+		input: 'src/js/scripts.js',
 		polyfills: '.polyfill.js',
 		output: 'dist/assets/js/'
 	},
@@ -86,6 +86,7 @@ var lazypipe = require('lazypipe');
 var rename = require('gulp-rename');
 var header = require('gulp-header');
 var package = require('./package.json');
+var sourcemaps = require('gulp-sourcemaps');
 
 // Scripts
 var jshint = require('gulp-jshint');
@@ -107,6 +108,7 @@ var svgmin = require('gulp-svgmin');
 
 // Include Files
 var fileinclude = require('gulp-file-include');
+var include = require('gulp-include');
 
 // BrowserSync
 var browserSync = require('browser-sync');
@@ -142,6 +144,19 @@ var jsTasks = lazypipe()
 	.pipe(optimizejs)
 	.pipe(header, banner.min, {package: package})
 	.pipe(dest, paths.scripts.output);
+
+// Remove pre-existing content from output folders
+var jsIncludes = function (done) {
+
+    src(paths.scripts.input)
+        .pipe(include())
+        .on('error', console.log)
+        .pipe(jsTasks());
+
+	// Signal completion
+	return done();
+
+};
 
 // Lint, minify, and concatenate scripts
 var buildScripts = function (done) {
@@ -216,6 +231,7 @@ var buildStyles = function (done) {
 
 	// Run tasks on all Sass files
 	src(paths.styles.input)
+        .pipe(sourcemaps.init())
 		.pipe(sass({
 			outputStyle: 'expanded',
 			sourceComments: true
@@ -234,6 +250,7 @@ var buildStyles = function (done) {
 			}
 		}))
 		.pipe(header(banner.min, { package : package }))
+        .pipe(sourcemaps.write(''))
 		.pipe(dest(paths.styles.output));
 
 	// Signal completion
@@ -345,11 +362,12 @@ var watchSource = function (done) {
 
 // Default task
 // gulp
-exports.build = series(
+exports.default = series(
 	cleanDist,
 	parallel(
-		buildScripts,
-		lintScripts,
+        // buildScripts,
+        jsIncludes,
+		// lintScripts,
 		buildStyles,
         compressImages,
 		buildSVGs,
@@ -360,8 +378,8 @@ exports.build = series(
 
 // Watch and reload
 // gulp watch
-exports.default = series(
-	exports.build,
+exports.watch = series(
+	exports.default,
 	startServer,
 	watchSource
 );
