@@ -3,14 +3,14 @@
     // REGISTER & ENQUEUE
     // =========================================================================
     function mightyResources() {
-        $css_file = get_stylesheet_directory() . '/app/assets/css/style.min.css';
-        wp_enqueue_style('mightily-css', get_stylesheet_directory_uri() . '/app/assets/css/style.min.css', '', date('m.d.Y.H.i.s', filemtime($css_file)));
+        $css_file = get_stylesheet_directory() . '/dist/assets/css/style.min.css';
+        wp_enqueue_style('mightily-css', get_stylesheet_directory_uri() . '/dist/assets/css/style.min.css', '', date('m.d.Y.H.i.s', filemtime($css_file)));
 
         wp_deregister_script('jquery');
         wp_register_script('jquery', ('//ajax.googleapis.com/ajax/libs/jquery/2.2.4/jquery.min.js'), '', '2.2.4', true);
         wp_enqueue_script('jquery');
 
-        wp_enqueue_script('mightily-js', get_stylesheet_directory_uri() . '/app/assets/js/scripts.min.js', ['jquery'], '1.0.5', true);
+        wp_enqueue_script('mightily-js', get_stylesheet_directory_uri() . '/dist/assets/js/scripts.min.js', ['jquery'], '1.0.5', true);
     }
 
     //======================================================================

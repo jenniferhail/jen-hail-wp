@@ -4,8 +4,6 @@
     //======================================================================
     add_action('wp_enqueue_scripts', 'mightyResources');
 
-    add_action('admin_head', 'admin_styles');
-
     add_action('after_setup_theme', 'theme_slug_setup');
     add_action('wp_head', 'add_meta_tags', 1);
 
