@@ -18,8 +18,7 @@
 
 <body <?php body_class(); ?>>
 
-
-	<?php if (get_field('notification_display', 'option')): ?>
+	<?php if (acf_activated() && get_field('notification_display', 'option')): ?>
 	    <div class="component option notification">
 			<button class="close">Close</button>
 	        <div class="wrapper">
@@ -30,7 +29,7 @@
 	    </div>
 	<?php endif; ?>
 
-	<?php if (get_field('cookie_notice_display', 'option')): ?>
+	<?php if (acf_activated() && get_field('cookie_notice_display', 'option')): ?>
 		<div class="component option cookie-notice">
 			<button class="close">Close</button>
 			<div class="wrapper">
