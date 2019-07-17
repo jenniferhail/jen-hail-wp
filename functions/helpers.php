@@ -1,6 +1,17 @@
 <?php
 
     //======================================================================
+    // Checking if FacetWP is Activated
+    //======================================================================
+    function facetwp_activated() {
+        if (function_exists('facetwp_display')) {
+            return true;
+        }
+
+        return false;
+    }
+
+    //======================================================================
     // Checking if ACF is Activated
     //======================================================================
     function acf_activated() {

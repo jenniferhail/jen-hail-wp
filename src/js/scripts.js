@@ -1,24 +1,14 @@
-//=require layouts/accordions.js
-//=require layouts/cookie-notice.js
-//=require layouts/notification.js
-//=require layouts/random-quote.js
-//=require layouts/slider.js
-//=require layouts/style-guide.js
+jQuery(document).ready(function ($) {
 
-$( document ).ready(function() {
-    'use strict';
+    // =require layouts/accordion.js
 
-	var app = new Vue({
-        el: '#app',
-        data: {
-            message: 'Hello Vue!',
-        }
-    });
-
-    accordions.init();
-    cookieNotice.init();
-    notification.init();
-    randomQuote.init();
-    glide.init();
-	styleGuide.init();
+    if($('#app').length) {
+        var app = new Vue({
+            el: '#app',
+            data: {
+                message: 'Hello Vue!',
+            }
+        });
+    }
+    
 });

@@ -1,5 +1,5 @@
 <?php
-    function events() {
+    function event() {
         $labels = [
             'name'                  => _x('Events', 'Post Type General Name', 'text_domain'),
             'singular_name'         => _x('Event', 'Post Type Singular Name', 'text_domain'),
@@ -49,9 +49,9 @@
             'publicly_queryable'    => true,
             'capability_type'       => 'page',
         ];
-        register_post_type('events', $args);
+        register_post_type('event', $args);
     }
-    add_action('init', 'events', 0);
+    add_action('init', 'event', 0);
 
     // Register Custom Taxonomy
     function event_categories() {

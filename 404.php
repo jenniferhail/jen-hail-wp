@@ -2,7 +2,7 @@
     <div class="layout basic-content">
         <div class="wrapper">
             <div class="row">
-                <h1>Sorry. page not found.</h1>
+                <h1>404 Error.</h1>
             </div>
         </div>
     </div>

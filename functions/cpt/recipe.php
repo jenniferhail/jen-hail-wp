@@ -1,5 +1,5 @@
 <?php
-    function recipes() {
+    function recipe() {
         $labels = [
             'name'                  => _x('Recipes', 'Post Type General Name', 'text_domain'),
             'singular_name'         => _x('Recipe', 'Post Type Singular Name', 'text_domain'),
@@ -49,9 +49,9 @@
             'publicly_queryable'    => true,
             'capability_type'       => 'page',
         ];
-        register_post_type('recipes', $args);
+        register_post_type('recipe', $args);
     }
-    add_action('init', 'recipes', 0);
+    add_action('init', 'recipe', 0);
 
     // Register Custom Taxonomy
     function recipe_categories() {

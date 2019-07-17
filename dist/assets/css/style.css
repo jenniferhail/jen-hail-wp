@@ -461,10 +461,10 @@ button, [type='button'], [type='reset'], [type='submit'] {
   -webkit-appearance: none;
      -moz-appearance: none;
           appearance: none;
-  background-color: #1565c0;
+  background-color: #fdbf42;
   border: 0;
-  border-radius: 3px;
-  color: contrast-switch(#1565c0);
+  border-radius: 0px;
+  color: contrast-switch(#fdbf42);
   cursor: pointer;
   display: inline-block;
   font-family: "Helvetica Neue", Helvetica, Arial;
@@ -487,13 +487,13 @@ button, [type='button'], [type='reset'], [type='submit'] {
 
 /* line 25, src/scss/bitters/_buttons.scss */
 button:hover, [type='button']:hover, [type='reset']:hover, [type='submit']:hover {
-  background-color: shade(#1565c0, 20%);
-  color: contrast-switch(shade(#1565c0, 20%));
+  background-color: shade(#fdbf42, 20%);
+  color: contrast-switch(shade(#fdbf42, 20%));
 }
 
 /* line 30, src/scss/bitters/_buttons.scss */
 button:focus, [type='button']:focus, [type='reset']:focus, [type='submit']:focus {
-  outline: 3px solid rgba(21, 101, 192, 0.6);
+  outline: 3px solid rgba(253, 191, 66, 0.6);
   outline-offset: 2px;
 }
 
@@ -505,7 +505,7 @@ button:disabled, [type='button']:disabled, [type='reset']:disabled, [type='submi
 
 /* line 39, src/scss/bitters/_buttons.scss */
 button:disabled:hover, [type='button']:disabled:hover, [type='reset']:disabled:hover, [type='submit']:disabled:hover {
-  background-color: #1565c0;
+  background-color: #fdbf42;
 }
 
 /* line 45, src/scss/bitters/_buttons.scss */
@@ -578,7 +578,7 @@ textarea {
           appearance: none;
   background-color: #fff;
   border: 1px solid #ddd;
-  border-radius: 3px;
+  border-radius: 0px;
   -webkit-box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.06);
           box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.06);
   -webkit-box-sizing: border-box;
@@ -597,9 +597,9 @@ textarea {
 
 /* line 48, src/scss/bitters/_forms.scss */
 [type='color']:focus, [type='date']:focus, [type='datetime']:focus, [type='datetime-local']:focus, [type='email']:focus, [type='month']:focus, [type='number']:focus, [type='password']:focus, [type='search']:focus, [type='tel']:focus, [type='text']:focus, [type='time']:focus, [type='url']:focus, [type='week']:focus, input:not([type]):focus, textarea:focus {
-  border-color: #1565c0;
-  -webkit-box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.06), 0 0 5px rgba(21, 101, 192, 0.7);
-          box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.06), 0 0 5px rgba(21, 101, 192, 0.7);
+  border-color: #fdbf42;
+  -webkit-box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.06), 0 0 5px rgba(253, 191, 66, 0.7);
+          box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.06), 0 0 5px rgba(253, 191, 66, 0.7);
   outline: none;
 }
 
@@ -660,7 +660,7 @@ select {
 [type="radio"]:focus,
 [type="file"]:focus,
 select:focus {
-  outline: 3px solid rgba(21, 101, 192, 0.6);
+  outline: 3px solid rgba(253, 191, 66, 0.6);
   outline-offset: 2px;
 }
 
@@ -849,7 +849,7 @@ p {
 
 /* line 83, src/scss/bitters/_typography.scss */
 a {
-  color: #1565c0;
+  color: #fdbf42;
   -webkit-text-decoration-skip: auto;
           text-decoration-skip: auto;
   -webkit-transition: all 300ms ease-in-out;
@@ -859,7 +859,7 @@ a {
 
 /* line 89, src/scss/bitters/_typography.scss */
 a:focus {
-  outline: 3px solid rgba(21, 101, 192, 0.6);
+  outline: 3px solid rgba(253, 191, 66, 0.6);
   outline-offset: 2px;
 }
 
@@ -2901,6 +2901,56 @@ body[data-aos-easing="ease-in-out-quart"] [data-aos], [data-aos][data-aos][data-
 /* line 2, src/scss/partials/_nav.scss */
 .nav ul {
   list-style: none;
+}
+
+/* line 2, src/scss/partials/_search.scss */
+.search-results .facet-label {
+  margin-bottom: 4px;
+}
+
+/* line 5, src/scss/partials/_search.scss */
+.search-results .facetwp-facet {
+  margin-bottom: 20px;
+}
+
+/* line 9, src/scss/partials/_search.scss */
+.search-results .facetwp-facet-search_field .facetwp-search-wrap {
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+}
+
+/* line 12, src/scss/partials/_search.scss */
+.search-results .facetwp-facet-search_field .facetwp-btn {
+  display: none;
+}
+
+/* line 15, src/scss/partials/_search.scss */
+.search-results .facetwp-facet-search_field input,
+.search-results .facetwp-facet-search_field button {
+  height: 50px;
+}
+
+/* line 20, src/scss/partials/_search.scss */
+.search-results .search-filters {
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-pack: justify;
+      -ms-flex-pack: justify;
+          justify-content: space-between;
+}
+
+/* line 24, src/scss/partials/_search.scss */
+.search-results .facetwp-facet-content_types {
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+}
+
+/* line 27, src/scss/partials/_search.scss */
+.search-results .facetwp-facet-content_types .facetwp-radio + .facetwp-radio {
+  margin-left: 20px;
 }
 
 /* line 2, src/scss/layouts/_accordions.scss */

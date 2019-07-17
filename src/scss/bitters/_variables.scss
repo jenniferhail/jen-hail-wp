@@ -27,20 +27,21 @@ $base-font-weight: 300;
 $heading-font-weight: $base-font-weight;
 
 // Other Sizes
-$base-border-radius: 3px;
+$base-border-radius: 0px;
 $base-spacing: 1.5em;
 $small-spacing: $base-spacing / 2;
 $base-z-index: 0;
 
 // Colors
 $blue: #1565c0;
+$yellow: #fdbf42;
 $dark-gray: #333;
 $medium-gray: #999;
 $light-gray: #ddd;
 
 // Font Colors
 $base-font-color: $dark-gray;
-$action-color: $blue;
+$action-color: $yellow;
 
 // Border
 $base-border-color: $light-gray;

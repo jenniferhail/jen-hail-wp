@@ -1,22 +1,22 @@
 <?php
-    function faqs() {
+    function product() {
         $labels = [
-            'name'                  => _x('FAQs', 'Post Type General Name', 'text_domain'),
-            'singular_name'         => _x('FAQ', 'Post Type Singular Name', 'text_domain'),
-            'menu_name'             => __('FAQs', 'text_domain'),
-            'name_admin_bar'        => __('FAQs', 'text_domain'),
+            'name'                  => _x('Products', 'Post Type General Name', 'text_domain'),
+            'singular_name'         => _x('Product', 'Post Type Singular Name', 'text_domain'),
+            'menu_name'             => __('Products', 'text_domain'),
+            'name_admin_bar'        => __('Products', 'text_domain'),
             'archives'              => __('Item Archives', 'text_domain'),
             'attributes'            => __('Item Attributes', 'text_domain'),
-            'parent_item_colon'     => __('Parent FAQ:', 'text_domain'),
-            'all_items'             => __('All FAQs', 'text_domain'),
-            'add_new_item'          => __('Add New FAQ', 'text_domain'),
-            'add_new'               => __('Add FAQ', 'text_domain'),
-            'new_item'              => __('New FAQ', 'text_domain'),
-            'edit_item'             => __('Edit FAQ', 'text_domain'),
-            'update_item'           => __('Update FAQ', 'text_domain'),
-            'view_item'             => __('View FAQ', 'text_domain'),
-            'view_items'            => __('View FAQs', 'text_domain'),
-            'search_items'          => __('Search FAQs', 'text_domain'),
+            'parent_item_colon'     => __('Parent Product:', 'text_domain'),
+            'all_items'             => __('All Products', 'text_domain'),
+            'add_new_item'          => __('Add New Product', 'text_domain'),
+            'add_new'               => __('Add Product', 'text_domain'),
+            'new_item'              => __('New Product', 'text_domain'),
+            'edit_item'             => __('Edit Product', 'text_domain'),
+            'update_item'           => __('Update Product', 'text_domain'),
+            'view_item'             => __('View Product', 'text_domain'),
+            'view_items'            => __('View Products', 'text_domain'),
+            'search_items'          => __('Search Products', 'text_domain'),
             'not_found'             => __('Not found', 'text_domain'),
             'not_found_in_trash'    => __('Not found in Trash', 'text_domain'),
             'featured_image'        => __('Featured Image', 'text_domain'),
@@ -30,10 +30,10 @@
             'filter_items_list'     => __('Filter items list', 'text_domain'),
         ];
         $args = [
-            'label'                 => __('FAQ', 'text_domain'),
+            'label'                 => __('Product', 'text_domain'),
             'description'           => __('A collection of drink recipes.', 'text_domain'),
             'labels'                => $labels,
-            'supports'              => [ 'title', 'editor' ],
+            'supports'              => [ 'title', 'editor', 'thumbnail' ],
             'taxonomies'            => [ 'recipe_categories' ],
             'hierarchical'          => false,
             'public'                => true,
@@ -49,16 +49,16 @@
             'publicly_queryable'    => true,
             'capability_type'       => 'page',
         ];
-        register_post_type('faqs', $args);
+        register_post_type('product', $args);
     }
-    add_action('init', 'faqs', 0);
+    add_action('init', 'product', 0);
 
     // Register Custom Taxonomy
-    function faq_categories() {
+    function product_categories() {
         $labels = [
-            'name'                       => _x('FAQ Categories', 'Taxonomy General Name', 'text_domain'),
-            'singular_name'              => _x('FAQ Category', 'Taxonomy Singular Name', 'text_domain'),
-            'menu_name'                  => __('FAQ Category', 'text_domain'),
+            'name'                       => _x('Product Categories', 'Taxonomy General Name', 'text_domain'),
+            'singular_name'              => _x('Product Category', 'Taxonomy Singular Name', 'text_domain'),
+            'menu_name'                  => __('Product Category', 'text_domain'),
             'all_items'                  => __('All Items', 'text_domain'),
             'parent_item'                => __('Parent Item', 'text_domain'),
             'parent_item_colon'          => __('Parent Item:', 'text_domain'),
@@ -86,6 +86,6 @@
             'show_in_nav_menus'          => true,
             'show_tagcloud'              => true,
         ];
-        register_taxonomy('faq_categories', [ 'faq' ], $args);
+        register_taxonomy('product_categories', [ 'product' ], $args);
     }
-    add_action('init', 'faq_categories', 0);
+    add_action('init', 'product_categories', 0);

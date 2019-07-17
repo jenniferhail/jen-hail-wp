@@ -18,7 +18,7 @@
     // =========================================================================
     // CUSTOM POST TYPES
     // =========================================================================
-    // require_once dirname(__FILE__) . '/functions/cpt/events.php';
-    // require_once dirname(__FILE__) . '/functions/cpt/faqs.php';
-    // require_once dirname(__FILE__) . '/functions/cpt/products.php';
-    // require_once dirname(__FILE__) . '/functions/cpt/recipes.php';
+    require_once dirname(__FILE__) . '/functions/cpt/event.php';
+    require_once dirname(__FILE__) . '/functions/cpt/faq.php';
+    require_once dirname(__FILE__) . '/functions/cpt/product.php';
+    // require_once dirname(__FILE__) . '/functions/cpt/recipe.php';
