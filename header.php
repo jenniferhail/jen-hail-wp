@@ -18,33 +18,25 @@
 
 <body <?php body_class(); ?>>
 
-	<?php if (acf_activated() && get_field('notification_display', 'option')): ?>
-	    <div class="component option notification">
-			<button class="close">Close</button>
-	        <div class="wrapper">
-	            <div class="content">
-	                <?php the_field('notification_content', 'option'); ?>
-	            </div>
-	        </div>
-	    </div>
-	<?php endif; ?>
+	<header>
+		<div class="wrapper">
+			<?php $header_logo = get_field('header_logo', 'option'); ?>
 
-	<?php if (acf_activated() && get_field('cookie_notice_display', 'option')): ?>
-		<div class="component option cookie-notice">
-			<button class="close">Close</button>
-			<div class="wrapper">
-				<div class="content">
-					<p><?php the_field('cookie_notice_content', 'option'); ?></p>
-				</div>
-			</div>
+			<a href="<?php echo esc_url( home_url( '/' ) ); ?>" class="logo">
+				<img src="<?php echo $header_logo['url']; ?>" alt="<?php echo $header_logo['alt']; ?>">
+			</a>
+
+			<nav>
+				<ul>
+					<?php
+						$args = array(
+							'menu' => 'main-menu',
+							'container' => 'false',
+							'items_wrap' => '%3$s'
+						);
+					?>
+					<?php wp_nav_menu($args); ?>
+				</ul>
+			</nav>
 		</div>
-	<?php endif; ?>
-
-	<?php
-		$args = array(
-			'menu' => 'main-menu',
-			'container' => 'false',
-			'items_wrap' => '%3$s'
-		);
-	 ?>
-	<?php wp_nav_menu($args); ?>
+	</header>

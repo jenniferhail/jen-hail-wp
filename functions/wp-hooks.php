@@ -24,9 +24,6 @@
     //======================================================================
     // WORDPRESS FILTERS
     //======================================================================
-
-    add_filter('acf/settings/remove_wp_meta_box', '__return_true'); //Drastically speed up the load times of the post edit page!
-
     add_filter('embed_oembed_html', 'video_embed_wrapper', 10, 3);
     add_filter('video_embed_html', 'video_embed_wrapper'); // Jetpack
     add_filter('excerpt_more', 'new_excerpt_more');

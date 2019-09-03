@@ -768,7 +768,7 @@ html {
   color: #333;
   font-family: "Helvetica Neue", Helvetica, Arial;
   font-size: 16px;
-  font-weight: 300;
+  font-weight: 600;
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
 }
@@ -798,7 +798,7 @@ h6.underline, .h6.underline {
 h1, .h1 {
   font-size: 60px;
   font-family: "Helvetica Neue", Helvetica, Arial;
-  font-weight: 300;
+  font-weight: 600;
   line-height: 1.2;
 }
 
@@ -806,7 +806,7 @@ h1, .h1 {
 h2, .h2 {
   font-size: 50px;
   font-family: "Helvetica Neue", Helvetica, Arial;
-  font-weight: 300;
+  font-weight: 600;
   line-height: 1.2;
 }
 
@@ -814,7 +814,7 @@ h2, .h2 {
 h3, .h3 {
   font-size: 40px;
   font-family: "Helvetica Neue", Helvetica, Arial;
-  font-weight: 300;
+  font-weight: 600;
   line-height: 1.2;
 }
 
@@ -822,7 +822,7 @@ h3, .h3 {
 h4, .h4 {
   font-size: 30px;
   font-family: "Helvetica Neue", Helvetica, Arial;
-  font-weight: 300;
+  font-weight: 600;
   line-height: 1.2;
 }
 
@@ -830,7 +830,7 @@ h4, .h4 {
 h5, .h5 {
   font-size: 24px;
   font-family: "Helvetica Neue", Helvetica, Arial;
-  font-weight: 300;
+  font-weight: 600;
   line-height: 1.3;
 }
 
@@ -838,7 +838,7 @@ h5, .h5 {
 h6, .h6 {
   font-size: 18px;
   font-family: "Helvetica Neue", Helvetica, Arial;
-  font-weight: 300;
+  font-weight: 600;
   line-height: 1.5;
 }
 
@@ -1096,32 +1096,32 @@ blockquote {
 
 /* line 121, src/scss/bitters/_style-guide.scss */
 .typeset h1:after {
-  content: "60px 300 1.2";
+  content: "60px 600 1.2";
 }
 
 /* line 126, src/scss/bitters/_style-guide.scss */
 .typeset h2:after {
-  content: "50px 300 1.2";
+  content: "50px 600 1.2";
 }
 
 /* line 131, src/scss/bitters/_style-guide.scss */
 .typeset h3:after {
-  content: "40px 300 1.2";
+  content: "40px 600 1.2";
 }
 
 /* line 136, src/scss/bitters/_style-guide.scss */
 .typeset h4:after {
-  content: "30px 300 1.2";
+  content: "30px 600 1.2";
 }
 
 /* line 141, src/scss/bitters/_style-guide.scss */
 .typeset h5:after {
-  content: "24px 300 1.3";
+  content: "24px 600 1.3";
 }
 
 /* line 146, src/scss/bitters/_style-guide.scss */
 .typeset h6:after {
-  content: "18px 300 1.5";
+  content: "18px 600 1.5";
 }
 
 /* line 3, src/scss/vendor/glidejs/_glide.core.scss */
@@ -2898,9 +2898,29 @@ body[data-aos-easing="ease-in-out-quart"] [data-aos], [data-aos][data-aos][data-
   list-style: none;
 }
 
-/* line 2, src/scss/partials/_nav.scss */
-.nav ul {
-  list-style: none;
+/* line 1, src/scss/partials/_header.scss */
+header {
+  padding: 20px 0;
+}
+
+/* line 3, src/scss/partials/_header.scss */
+header .wrapper {
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-pack: justify;
+      -ms-flex-pack: justify;
+          justify-content: space-between;
+  -webkit-box-align: center;
+      -ms-flex-align: center;
+          align-items: center;
+}
+
+/* line 8, src/scss/partials/_header.scss */
+header .logo {
+  display: inline-block;
+  width: 100%;
+  max-width: 120px;
 }
 
 /* line 2, src/scss/partials/_search.scss */
@@ -2951,6 +2971,18 @@ body[data-aos-easing="ease-in-out-quart"] [data-aos], [data-aos][data-aos][data-
 /* line 27, src/scss/partials/_search.scss */
 .search-results .facetwp-facet-content_types .facetwp-radio + .facetwp-radio {
   margin-left: 20px;
+}
+
+/* line 2, src/scss/partials/_footer.scss */
+footer .wrapper {
+  text-align: center;
+}
+
+/* line 5, src/scss/partials/_footer.scss */
+footer .logo {
+  display: inline-block;
+  width: 100%;
+  max-width: 120px;
 }
 
 /* line 2, src/scss/layouts/_accordions.scss */
@@ -3536,11 +3568,11 @@ body[data-aos-easing="ease-in-out-quart"] [data-aos], [data-aos][data-aos][data-
   top: 0;
   left: 0;
   width: 100%;
-  height: 100px;
-  color: #ffffff;
+  height: 60px;
+  color: #000000;
   -webkit-transform: translate3d(0, 0, 0);
           transform: translate3d(0, 0, 0);
-  background-color: #000000;
+  background-color: #fdbf42;
   -webkit-transition: all 300ms ease-in-out;
   transition: all 300ms ease-in-out;
   z-index: 9999;

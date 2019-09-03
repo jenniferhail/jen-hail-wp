@@ -1,6 +1,11 @@
-<?php if(acf_activated()) : ?>
-    <footer>
-    
+<footer>
+    <div class="wrapper">
+        <?php $footer_logo = get_field('footer_logo', 'option'); ?>
+
+        <a href="<?php echo esc_url( home_url( '/' ) ); ?>" class="logo">
+            <img src="<?php echo $footer_logo['url']; ?>" alt="<?php echo $footer_logo['alt']; ?>">
+        </a>
+
         <?php
             $args = array(
                 'menu' => 'footer-menu',
@@ -10,33 +15,18 @@
         ?>
         <?php wp_nav_menu($args); ?>
 
-        <div class="copyright">
-            <p><?php the_field('footer_content', 'option'); ?></p>
-        </div>
-
-        <?php if( have_rows('footer_social', 'option') ): ?>
-            <ul class="social-list">
-                <?php while( have_rows('footer_social', 'option') ): the_row(); ?>
-                    <?php
-                        $network = get_sub_field('network');
-                        $link = get_sub_field('link');
-                        $link_url = $link['url'];
-                        $link_title = $link['title'];
-                        $link_target = $link['target'];
-
-                        if ($link_target == NULL) {
-                            $link_target = '_self';
-                        }
-                    ?>
-                    <li class="social-item">
-                        <a href="<?php echo $link_url; ?>" target="<?php echo $link_target; ?>"><?php echo $link_title; ?></a>
-                    </li>
-                <?php endwhile; ?>
-            </ul>
+        <?php
+            $copyright_information = get_field('copyright_information', 'option');
+            $copyright_information_enabled = $copyright_information['enable'];
+        ?>
+        
+        <?php if ($copyright_information_enabled) : ?>
+            <div class="copyright">
+                <?php echo $copyright_information['text']; ?>
+            </div>
         <?php endif; ?>
-
-    </footer>
-<?php endif; ?>
+    </div>
+</footer>
 
 <?php if (acf_activated() && get_field('popup_display', 'option')): ?>
     <div class="option popup" data-delay="<?php the_field('popup_delay', 'option'); ?>" data-duration="<?php the_field('popup_duration', 'option'); ?>">
