@@ -10,12 +10,15 @@
 
 <div id="app" class="style-guide-wrapper">
 
-	<nav class="style-guide-nav">
-	<!-- javascript will create the menu for you as long as each section has an ID -->
-	<ul></ul>
+	<nav id="style-guide-nav">
+	<ul>
+		<li v-for="layout in layouts">
+			<a v-bind:href="'#' + layout.id">{{layout.dataset.menutitle}}</a>
+		</li>
+	</ul>
 </nav>
 
-	<section id="colors" class="layout color-palette">
+	<section id="colors" class="layout color-palette" data-menutitle="Colors">
 	<div class="wrapper">
 		<h1 class="main-title">Style Guide</h1>
 		<h2 class="title">Colors</h2>
@@ -28,7 +31,7 @@
 		</div>
 	</div>
 </section>
-	<section id="typeface" class="layout type">
+	<section id="typeface" class="layout type" data-menutitle="Typeface">
 	<div class="wrapper">
 		<h2 class="title">Type Face</h2>
 		<div class="row">
@@ -318,7 +321,7 @@
 		</div>
 	</div>
 </section>
-	<section id="typeset" class="layout type">
+	<section id="typeset" class="layout type" data-menutitle="Typeset">
 	<div class="wrapper">
 		<h2 class="title">Typeset</h2>
 		<div class="row typeset">
@@ -331,30 +334,55 @@
 			<h6>Header 6</h6>
 
 			<h1>Lorem ipsum dolor sit amet, consectetur adipisicfdng elit. Necessitatibus, quo</h1>
-			<h2>Lorem ipsum dolor sit amet, consectetur adipisicing elit. Esse asperiores quasi minus quo dolore quas.</h2>
-			<h3>Lorem ipsum dolor sit amet, consectetur adipisicing elit. Laboriosam quasi officia saepe placeat dolor? Quas laudantium, unde vel!</h3>
-			<h4>Lorem ipsum dolor sit amet, consectetur adipisicing elit. Maiores iste nisi, distinctio cumque, eveniet ea dolores rem! Deserunt est libero dolorum, odit mollitia nulla!</h4>
-			<h5>Lorem ipsum dolor sit amet, consectetur adipisicing elit. Earum voluptas repudiandae rerum doloremque hic fugit assumenda, in, ea temporibus minus! Eum repudiandae dolorem laudantium quasi.</h5>
-			<h6>Lorem ipsum dolor sit amet, consectetur adipisicing elit. Amet, ab aliquam odit tempore nulla? Eveniet doloremque, consequuntur, eaque cumque veritatis dolorem odit voluptatem assumenda, placeat repellat deserunt aliquam culpa
+			<h2>Lorem ipsum dolor sit amet, consectetur adipisicing elit. Esse asperiores quasi minus quo dolore quas.
+			</h2>
+			<h3>Lorem ipsum dolor sit amet, consectetur adipisicing elit. Laboriosam quasi officia saepe placeat dolor?
+				Quas laudantium, unde vel!</h3>
+			<h4>Lorem ipsum dolor sit amet, consectetur adipisicing elit. Maiores iste nisi, distinctio cumque, eveniet
+				ea dolores rem! Deserunt est libero dolorum, odit mollitia nulla!</h4>
+			<h5>Lorem ipsum dolor sit amet, consectetur adipisicing elit. Earum voluptas repudiandae rerum doloremque
+				hic fugit assumenda, in, ea temporibus minus! Eum repudiandae dolorem laudantium quasi.</h5>
+			<h6>Lorem ipsum dolor sit amet, consectetur adipisicing elit. Amet, ab aliquam odit tempore nulla? Eveniet
+				doloremque, consequuntur, eaque cumque veritatis dolorem odit voluptatem assumenda, placeat repellat
+				deserunt aliquam culpa
 				animi.</h6>
 
 			<h2>Paragraphs</h2>
-			<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute
+			<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et
+				dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip
+				ex ea commodo consequat. Duis aute
 				irure
-				dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
-			<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do <a href="javascript:void(0)">eiusmod tempor incididunt ut labore</a> et dolore magna aliqua. Ut enim ad minim veniam, <a href="javascript:void(0)">quis nostrud
+				dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint
+				occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
+			<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do <a href="javascript:void(0)">eiusmod
+					tempor incididunt ut labore</a> et dolore magna aliqua. Ut enim ad minim veniam, <a
+					href="javascript:void(0)">quis nostrud
 					exercitation
-					ullamco</a> laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in <a href="javascript:void(0)">reprehenderit</a> in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non <a href="javascript:void(0)">proident</a>,
+					ullamco</a> laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in <a
+					href="javascript:void(0)">reprehenderit</a> in voluptate velit esse cillum dolore eu fugiat nulla
+				pariatur. Excepteur sint occaecat cupidatat non <a href="javascript:void(0)">proident</a>,
 				sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
-			<p><b>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo
+			<p><b>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et
+					dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut
+					aliquip ex ea commodo
 					consequat. Duis
-					aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</b></p>
-			<p><i>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo
+					aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.
+					Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id
+					est laborum.</b></p>
+			<p><i>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et
+					dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut
+					aliquip ex ea commodo
 					consequat. Duis
-					aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</i></p>
-			<blockquote> Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
+					aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.
+					Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id
+					est laborum.</i></p>
+			<blockquote> Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut
+				labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi
+				ut aliquip ex ea commodo consequat.
 				Duis aute irure
-				dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</blockquote>
+				dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint
+				occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+			</blockquote>
 			<ul>
 				<li>Lorem ipsum dolor sit amet</li>
 				<li>Lorem ipsum dolor sit amet</li>
@@ -374,7 +402,7 @@
 		</div>
 	</div>
 </section>
-	<section id="buttons-regular" class="layout button-styles">
+	<section id="buttons-regular" class="layout button-styles" data-menutitle="Buttons - Regular">
 	<div class="wrapper">
 		<h2 class="title">Button Styles</h2>
 		<div class="row">
@@ -389,7 +417,7 @@
 		</div>
 	</div>
 </section>
-	<section id="buttons-inverted" class="layout button-styles blue-bg">
+	<section id="buttons-inverted" class="layout button-styles blue-bg" data-menutitle="Buttons - Inverted">
 	<div class="wrapper">
 		<div class="row">
 			<div class="buttons">
@@ -403,7 +431,7 @@
 		</div>
 	</div>
 </section>
-	<section id="tables" class="layout tables">
+	<section id="tables" class="layout tables" data-menutitle="Tables">
 	<div class="wrapper">
 		<h2 class="title">Tables</h2>
 		<div class="row">
@@ -526,7 +554,7 @@
 		</div>
 	</div>
 </section>
-	<section id="form-elements" class="layout forms">
+	<section id="form-elements" class="layout forms" data-menutitle="Form Elements">
 	<div class="wrapper">
 		<h1 class="title">Form Elements</h1>
 		<div class="row">
@@ -589,14 +617,16 @@
 	</div>
 </section>
 
-	<section id="hero-style-1" class="layout hero style-1">
+	<section id="hero-style-1" class="layout hero style-1" data-menutitle="Hero - Style 1">
 	<div class="wrapper">
 		<h2 class="section-title">Hero - Style 1</h2>
 		<div class="row">
 			<div class="col">
 				<div class="content">
 					<h2 class="h1">Lorem ipsum dolor sit amet.</h2>
-					<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea
+					<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut
+						labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco
+						laboris nisi ut aliquip ex ea
 						commodo consequat. Duis aute.</p>
 					<a href="javascript:void(0)" class="styled-link">Learn more</a>
 				</div>
@@ -607,14 +637,16 @@
 		</div>
 	</div>
 </section>
-	<section id="hero-style-2" class="layout hero style-2">
+	<section id="hero-style-2" class="layout hero style-2" data-menutitle="Hero - Style 2">
 	<div class="wrapper">
 		<h2 class="section-title">Hero - Style 2</h2>
 		<div class="row">
 			<div class="col">
 				<div class="content">
 					<h2 class="h1">Lorem ipsum dolor sit amet.</h2>
-					<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea
+					<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut
+						labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco
+						laboris nisi ut aliquip ex ea
 						commodo consequat. Duis aute.</p>
 					<a href="javascript:void(0)" class="styled-link">Learn more</a>
 				</div>
@@ -625,14 +657,16 @@
 		</div>
 	</div>
 </section>
-	<section id="hero-style-3" class="layout hero style-3">
+	<section id="hero-style-3" class="layout hero style-3" data-menutitle="Hero - Style 3">
 	<div class="wrapper">
 		<h2 class="section-title">Hero - Style 3</h2>
 		<div class="row">
 			<div class="col">
 				<div class="content">
 					<h2 class="h1">Lorem ipsum dolor sit amet.</h2>
-					<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea
+					<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut
+						labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco
+						laboris nisi ut aliquip ex ea
 						commodo consequat. Duis aute.</p>
 					<a href="javascript:void(0)" class="styled-link">Learn more</a>
 				</div>
@@ -643,14 +677,16 @@
 		</div>
 	</div>
 </section>
-	<section id="hero-style-4" class="layout hero style-4">
+	<section id="hero-style-4" class="layout hero style-4" data-menutitle="Hero - Style 4">
 	<div class="wrapper">
 		<h2 class="section-title">Hero - Style 4</h2>
 		<div class="row">
 			<div class="col">
 				<div class="content">
 					<h2 class="h1">Lorem ipsum dolor sit amet.</h2>
-					<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea
+					<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut
+						labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco
+						laboris nisi ut aliquip ex ea
 						commodo consequat. Duis aute.</p>
 					<a href="javascript:void(0)" class="styled-link">Learn more</a>
 				</div>
@@ -661,7 +697,7 @@
 		</div>
 	</div>
 </section>
-	<section id="cards-1" class="layout cards one-col">
+	<section id="cards-1" class="layout cards one-col" data-menutitle="Cards - Col 1">
 	<div class="wrapper">
 		<h2 class="title">Cards - 1 Column</h2>
 		<div class="rows">
@@ -679,7 +715,7 @@
 		</div>
 	</div>
 </section>
-	<section id="cards-2" class="layout cards two-col">
+	<section id="cards-2" class="layout cards two-col" data-menutitle="Cards - Col 2">
 	<div class="wrapper">
 		<h2 class="title">Cards - 2 Column</h2>
 		<div class="rows">
@@ -697,7 +733,7 @@
 		</div>
 	</div>
 </section>
-	<section id="cards-3" class="layout cards three-col">
+	<section id="cards-3" class="layout cards three-col" data-menutitle="Cards - Col 3">
 	<div class="wrapper">
 		<h2 class="title">Cards - 3 Column</h2>
 		<div class="rows">
@@ -715,7 +751,7 @@
 		</div>
 	</div>
 </section>
-	<section id="cards-4" class="layout cards four-col">
+	<section id="cards-4" class="layout cards four-col" data-menutitle="Cards - Col 4">
 	<div class="wrapper">
 		<h2 class="title">Cards - 4 Column</h2>
 		<div class="rows">
@@ -733,7 +769,7 @@
 		</div>
 	</div>
 </section>
-	<section id="listing-people-list" class="layout listing people list">
+	<section id="listing-people-list" class="layout listing people list" data-menutitle="Listing - List">
 	<div class="wrapper">
 		<h2 class="section-title">Listing - People (list)</h2>
 		<div class="row">
@@ -748,7 +784,7 @@
 		</div>
 	</div>
 </section>
-	<section id="listing-people-grid" class="layout listing people grid">
+	<section id="listing-people-grid" class="layout listing people grid" data-menutitle="Listing - Grid">
 	<div class="wrapper">
 		<h2 class="section-title">Listing - People (grid)</h2>
 		<div class="row">
@@ -763,14 +799,15 @@
 		</div>
 	</div>
 </section>
-	<section id="accordion-tabs" class="layout accordion tabs">
+	<section id="accordion-tabs" class="layout accordion tabs" data-menutitle="Accordions - Tab">
 	<div class="wrapper">
 		<h2 class="title">Accordion - Tabs</h2>
 		<h2>Lorem ipsum dolor sit.</h2>
 		<div class="row">
 			<div class="col">
 				<ul class="tab-list">
-					<li v-for="(n, index) in 4" class="tab-link"><a v-bind:href="'#tab-' + index">Item {{index}}</a></li>
+					<li v-for="(n, index) in 4" class="tab-link"><a v-bind:href="'#tab-' + index">Item {{index}}</a>
+					</li>
 				</ul>
 			</div>
 			<div class="col">
@@ -778,8 +815,11 @@
 					<div class="acc-item" v-for="(n, index) in 4">
 						<div v-bind:id="'tab-' + index" class="acc-item-wrap">
 							<h3>Lorem ipsum dolor sit amet, consectetur</h3>
-							<p>Lorem ipsum dolor sit amet, consectetur adipisicing elit. Similique animi veniam quis suscipit libero eaque aliquid voluptatem sint soluta obcaecati!</p>
-							<p>Lorem ipsum dolor sit amet, consectetur adipisicing elit. Labore nam vitae repellat, officia eum. Vitae perspiciatis eveniet, vel laudantium similique deserunt mollitia quod non. Modi voluptatibus quaerat nostrum soluta
+							<p>Lorem ipsum dolor sit amet, consectetur adipisicing elit. Similique animi veniam quis
+								suscipit libero eaque aliquid voluptatem sint soluta obcaecati!</p>
+							<p>Lorem ipsum dolor sit amet, consectetur adipisicing elit. Labore nam vitae repellat,
+								officia eum. Vitae perspiciatis eveniet, vel laudantium similique deserunt mollitia quod
+								non. Modi voluptatibus quaerat nostrum soluta
 								fugiat?</p>
 							<p>Lorem ipsum dolor sit amet, consectetur adipisicing elit. Provident, architecto.</p>
 							<ul>
@@ -790,7 +830,8 @@
 								<li>Lorem ipsum dolor sit amet</li>
 								<li>Lorem ipsum dolor sit amet</li>
 							</ul>
-							<p>Lorem ipsum dolor sit amet, consectetur adipisicing elit. A animi laudantium libero doloremque reiciendis esse, quia, ducimus qui tempora consequatur!</p>
+							<p>Lorem ipsum dolor sit amet, consectetur adipisicing elit. A animi laudantium libero
+								doloremque reiciendis esse, quia, ducimus qui tempora consequatur!</p>
 
 						</div>
 					</div>
@@ -799,7 +840,7 @@
 		</div>
 	</div>
 </section>
-	<section id="accordion-list" class="layout accordion list">
+	<section id="accordion-list" class="layout accordion list" data-menutitle="Accordions - List">
 	<div class="wrapper">
 		<h2 class="title">Accordion - List</h2>
 		<div class="row">
@@ -814,26 +855,48 @@
 							</div>
 						</div>
 						<div class="content">
-							<p>Lorem ipsum dolor sit amet, consectetur adipisicing elit. Dolor similique tenetur, ducimus sapiente possimus. Ut quos incidunt debitis accusantium temporibus perferendis, consectetur voluptatum esse illum doloribus
+							<p>Lorem ipsum dolor sit amet, consectetur adipisicing elit. Dolor similique tenetur,
+								ducimus sapiente possimus. Ut quos incidunt debitis accusantium temporibus perferendis,
+								consectetur voluptatum esse illum doloribus
 								est atque rem soluta
-								sequi nostrum accusamus consequuntur tempore unde illo adipisci. Rerum, eum illo, facere est aperiam, quam molestiae dolorum explicabo libero sunt alias perspiciatis earum sequi. Soluta est, doloribus ipsum
+								sequi nostrum accusamus consequuntur tempore unde illo adipisci. Rerum, eum illo, facere
+								est aperiam, quam molestiae dolorum explicabo libero sunt alias perspiciatis earum
+								sequi. Soluta est, doloribus ipsum
 								dignissimos maxime animi quae
-								porro suscipit molestias optio, vero cum asperiores totam officia quia tenetur ipsam ad sed reprehenderit delectus minima quidem ratione labore. Mollitia, laboriosam voluptate quasi veritatis cum. Voluptas, cum
+								porro suscipit molestias optio, vero cum asperiores totam officia quia tenetur ipsam ad
+								sed reprehenderit delectus minima quidem ratione labore. Mollitia, laboriosam voluptate
+								quasi veritatis cum. Voluptas, cum
 								modi odio, dicta ducimus
-								veniam possimus facilis dolorum incidunt repellendus nemo accusantium iste voluptatum dolor non illo officia id, perferendis, odit nisi tenetur aliquid! Eligendi voluptatum, rem dolore ducimus doloribus.</p>
-							<p>Lorem ipsum dolor sit amet, consectetur adipisicing elit. Minima exercitationem esse repellendus accusantium adipisci consequatur, natus eum expedita distinctio nihil porro in ut, commodi, omnis saepe dolorem
+								veniam possimus facilis dolorum incidunt repellendus nemo accusantium iste voluptatum
+								dolor non illo officia id, perferendis, odit nisi tenetur aliquid! Eligendi voluptatum,
+								rem dolore ducimus doloribus.</p>
+							<p>Lorem ipsum dolor sit amet, consectetur adipisicing elit. Minima exercitationem esse
+								repellendus accusantium adipisci consequatur, natus eum expedita distinctio nihil porro
+								in ut, commodi, omnis saepe dolorem
 								officia illo atque quae
-								mollitia magnam quas dignissimos! Consequuntur ut, impedit similique, eius nobis facilis? Rerum, tempora blanditiis quo ad at. Pariatur dolorem impedit repellat expedita quidem sunt modi ad veritatis, placeat
+								mollitia magnam quas dignissimos! Consequuntur ut, impedit similique, eius nobis
+								facilis? Rerum, tempora blanditiis quo ad at. Pariatur dolorem impedit repellat expedita
+								quidem sunt modi ad veritatis, placeat
 								beatae fuga quod nemo harum
-								inventore laudantium ducimus ipsam ipsum asperiores deleniti cum quasi nam! Vel quibusdam porro error laborum quas numquam inventore velit illo, magnam delectus beatae facilis dicta cum iste aperiam. Repudiandae
+								inventore laudantium ducimus ipsam ipsum asperiores deleniti cum quasi nam! Vel
+								quibusdam porro error laborum quas numquam inventore velit illo, magnam delectus beatae
+								facilis dicta cum iste aperiam. Repudiandae
 								amet, aspernatur ex.
-								Voluptates, alias! Et fugiat recusandae quos excepturi incidunt eaque placeat id, ipsa eveniet consectetur unde maiores dolorum officiis esse ratione, omnis cumque! Vitae amet incidunt ea architecto fugiat
+								Voluptates, alias! Et fugiat recusandae quos excepturi incidunt eaque placeat id, ipsa
+								eveniet consectetur unde maiores dolorum officiis esse ratione, omnis cumque! Vitae amet
+								incidunt ea architecto fugiat
 								reiciendis nisi, quae autem veniam
-								quasi aspernatur, dignissimos perspiciatis natus, corporis fugit aut reprehenderit atque. Ea tempora voluptatibus quidem iure magnam, doloremque. Dicta laborum atque aliquid alias, eligendi voluptates assumenda, at
+								quasi aspernatur, dignissimos perspiciatis natus, corporis fugit aut reprehenderit
+								atque. Ea tempora voluptatibus quidem iure magnam, doloremque. Dicta laborum atque
+								aliquid alias, eligendi voluptates assumenda, at
 								quas sint repellendus,
-								nobis nam vitae velit fugiat maiores, incidunt error itaque quod dolorem minima optio blanditiis mollitia! Beatae quam dignissimos vitae recusandae accusantium maxime iure, esse iusto totam. Ipsam animi, dolore
+								nobis nam vitae velit fugiat maiores, incidunt error itaque quod dolorem minima optio
+								blanditiis mollitia! Beatae quam dignissimos vitae recusandae accusantium maxime iure,
+								esse iusto totam. Ipsam animi, dolore
 								quae! Perspiciatis
-								voluptatibus nemo voluptas repellendus odit ipsa quia dicta inventore eligendi dolore animi, fuga deleniti accusantium cumque voluptatum nihil porro! Vitae omnis labore commodi eius cupiditate perferendis quaerat
+								voluptatibus nemo voluptas repellendus odit ipsa quia dicta inventore eligendi dolore
+								animi, fuga deleniti accusantium cumque voluptatum nihil porro! Vitae omnis labore
+								commodi eius cupiditate perferendis quaerat
 								sunt molestiae dignissimos
 								blanditiis.</p>
 							<ul>
@@ -844,19 +907,33 @@
 								<li>Lorem ipsum dolor sit amet, consectetur adipisicing elit. Quod, similique</li>
 								<li>Lorem ipsum dolor sit amet, consectetur adipisicing elit. Quod, similique</li>
 							</ul>
-							<p>Lorem ipsum dolor sit amet, consectetur adipisicing elit. Minima exercitationem esse repellendus accusantium adipisci consequatur, natus eum expedita distinctio nihil porro in ut, commodi, omnis saepe dolorem
+							<p>Lorem ipsum dolor sit amet, consectetur adipisicing elit. Minima exercitationem esse
+								repellendus accusantium adipisci consequatur, natus eum expedita distinctio nihil porro
+								in ut, commodi, omnis saepe dolorem
 								officia illo atque quae
-								mollitia magnam quas dignissimos! Consequuntur ut, impedit similique, eius nobis facilis? Rerum, tempora blanditiis quo ad at. Pariatur dolorem impedit repellat expedita quidem sunt modi ad veritatis, placeat
+								mollitia magnam quas dignissimos! Consequuntur ut, impedit similique, eius nobis
+								facilis? Rerum, tempora blanditiis quo ad at. Pariatur dolorem impedit repellat expedita
+								quidem sunt modi ad veritatis, placeat
 								beatae fuga quod nemo harum
-								inventore laudantium ducimus ipsam ipsum asperiores deleniti cum quasi nam! Vel quibusdam porro error laborum quas numquam inventore velit illo, magnam delectus beatae facilis dicta cum iste aperiam. Repudiandae
+								inventore laudantium ducimus ipsam ipsum asperiores deleniti cum quasi nam! Vel
+								quibusdam porro error laborum quas numquam inventore velit illo, magnam delectus beatae
+								facilis dicta cum iste aperiam. Repudiandae
 								amet, aspernatur ex.
-								Voluptates, alias! Et fugiat recusandae quos excepturi incidunt eaque placeat id, ipsa eveniet consectetur unde maiores dolorum officiis esse ratione, omnis cumque! Vitae amet incidunt ea architecto fugiat
+								Voluptates, alias! Et fugiat recusandae quos excepturi incidunt eaque placeat id, ipsa
+								eveniet consectetur unde maiores dolorum officiis esse ratione, omnis cumque! Vitae amet
+								incidunt ea architecto fugiat
 								reiciendis nisi, quae autem veniam
-								quasi aspernatur, dignissimos perspiciatis natus, corporis fugit aut reprehenderit atque. Ea tempora voluptatibus quidem iure magnam, doloremque. Dicta laborum atque aliquid alias, eligendi voluptates assumenda, at
+								quasi aspernatur, dignissimos perspiciatis natus, corporis fugit aut reprehenderit
+								atque. Ea tempora voluptatibus quidem iure magnam, doloremque. Dicta laborum atque
+								aliquid alias, eligendi voluptates assumenda, at
 								quas sint repellendus,
-								nobis nam vitae velit fugiat maiores, incidunt error itaque quod dolorem minima optio blanditiis mollitia! Beatae quam dignissimos vitae recusandae accusantium maxime iure, esse iusto totam. Ipsam animi, dolore
+								nobis nam vitae velit fugiat maiores, incidunt error itaque quod dolorem minima optio
+								blanditiis mollitia! Beatae quam dignissimos vitae recusandae accusantium maxime iure,
+								esse iusto totam. Ipsam animi, dolore
 								quae! Perspiciatis
-								voluptatibus nemo voluptas repellendus odit ipsa quia dicta inventore eligendi dolore animi, fuga deleniti accusantium cumque voluptatum nihil porro! Vitae omnis labore commodi eius cupiditate perferendis quaerat
+								voluptatibus nemo voluptas repellendus odit ipsa quia dicta inventore eligendi dolore
+								animi, fuga deleniti accusantium cumque voluptatum nihil porro! Vitae omnis labore
+								commodi eius cupiditate perferendis quaerat
 								sunt molestiae dignissimos
 								blanditiis.</p>
 						</div>
@@ -870,26 +947,48 @@
 							</div>
 						</div>
 						<div class="content">
-							<p>Lorem ipsum dolor sit amet, consectetur adipisicing elit. Dolor similique tenetur, ducimus sapiente possimus. Ut quos incidunt debitis accusantium temporibus perferendis, consectetur voluptatum esse illum doloribus
+							<p>Lorem ipsum dolor sit amet, consectetur adipisicing elit. Dolor similique tenetur,
+								ducimus sapiente possimus. Ut quos incidunt debitis accusantium temporibus perferendis,
+								consectetur voluptatum esse illum doloribus
 								est atque rem soluta
-								sequi nostrum accusamus consequuntur tempore unde illo adipisci. Rerum, eum illo, facere est aperiam, quam molestiae dolorum explicabo libero sunt alias perspiciatis earum sequi. Soluta est, doloribus ipsum
+								sequi nostrum accusamus consequuntur tempore unde illo adipisci. Rerum, eum illo, facere
+								est aperiam, quam molestiae dolorum explicabo libero sunt alias perspiciatis earum
+								sequi. Soluta est, doloribus ipsum
 								dignissimos maxime animi quae
-								porro suscipit molestias optio, vero cum asperiores totam officia quia tenetur ipsam ad sed reprehenderit delectus minima quidem ratione labore. Mollitia, laboriosam voluptate quasi veritatis cum. Voluptas, cum
+								porro suscipit molestias optio, vero cum asperiores totam officia quia tenetur ipsam ad
+								sed reprehenderit delectus minima quidem ratione labore. Mollitia, laboriosam voluptate
+								quasi veritatis cum. Voluptas, cum
 								modi odio, dicta ducimus
-								veniam possimus facilis dolorum incidunt repellendus nemo accusantium iste voluptatum dolor non illo officia id, perferendis, odit nisi tenetur aliquid! Eligendi voluptatum, rem dolore ducimus doloribus.</p>
-							<p>Lorem ipsum dolor sit amet, consectetur adipisicing elit. Minima exercitationem esse repellendus accusantium adipisci consequatur, natus eum expedita distinctio nihil porro in ut, commodi, omnis saepe dolorem
+								veniam possimus facilis dolorum incidunt repellendus nemo accusantium iste voluptatum
+								dolor non illo officia id, perferendis, odit nisi tenetur aliquid! Eligendi voluptatum,
+								rem dolore ducimus doloribus.</p>
+							<p>Lorem ipsum dolor sit amet, consectetur adipisicing elit. Minima exercitationem esse
+								repellendus accusantium adipisci consequatur, natus eum expedita distinctio nihil porro
+								in ut, commodi, omnis saepe dolorem
 								officia illo atque quae
-								mollitia magnam quas dignissimos! Consequuntur ut, impedit similique, eius nobis facilis? Rerum, tempora blanditiis quo ad at. Pariatur dolorem impedit repellat expedita quidem sunt modi ad veritatis, placeat
+								mollitia magnam quas dignissimos! Consequuntur ut, impedit similique, eius nobis
+								facilis? Rerum, tempora blanditiis quo ad at. Pariatur dolorem impedit repellat expedita
+								quidem sunt modi ad veritatis, placeat
 								beatae fuga quod nemo harum
-								inventore laudantium ducimus ipsam ipsum asperiores deleniti cum quasi nam! Vel quibusdam porro error laborum quas numquam inventore velit illo, magnam delectus beatae facilis dicta cum iste aperiam. Repudiandae
+								inventore laudantium ducimus ipsam ipsum asperiores deleniti cum quasi nam! Vel
+								quibusdam porro error laborum quas numquam inventore velit illo, magnam delectus beatae
+								facilis dicta cum iste aperiam. Repudiandae
 								amet, aspernatur ex.
-								Voluptates, alias! Et fugiat recusandae quos excepturi incidunt eaque placeat id, ipsa eveniet consectetur unde maiores dolorum officiis esse ratione, omnis cumque! Vitae amet incidunt ea architecto fugiat
+								Voluptates, alias! Et fugiat recusandae quos excepturi incidunt eaque placeat id, ipsa
+								eveniet consectetur unde maiores dolorum officiis esse ratione, omnis cumque! Vitae amet
+								incidunt ea architecto fugiat
 								reiciendis nisi, quae autem veniam
-								quasi aspernatur, dignissimos perspiciatis natus, corporis fugit aut reprehenderit atque. Ea tempora voluptatibus quidem iure magnam, doloremque. Dicta laborum atque aliquid alias, eligendi voluptates assumenda, at
+								quasi aspernatur, dignissimos perspiciatis natus, corporis fugit aut reprehenderit
+								atque. Ea tempora voluptatibus quidem iure magnam, doloremque. Dicta laborum atque
+								aliquid alias, eligendi voluptates assumenda, at
 								quas sint repellendus,
-								nobis nam vitae velit fugiat maiores, incidunt error itaque quod dolorem minima optio blanditiis mollitia! Beatae quam dignissimos vitae recusandae accusantium maxime iure, esse iusto totam. Ipsam animi, dolore
+								nobis nam vitae velit fugiat maiores, incidunt error itaque quod dolorem minima optio
+								blanditiis mollitia! Beatae quam dignissimos vitae recusandae accusantium maxime iure,
+								esse iusto totam. Ipsam animi, dolore
 								quae! Perspiciatis
-								voluptatibus nemo voluptas repellendus odit ipsa quia dicta inventore eligendi dolore animi, fuga deleniti accusantium cumque voluptatum nihil porro! Vitae omnis labore commodi eius cupiditate perferendis quaerat
+								voluptatibus nemo voluptas repellendus odit ipsa quia dicta inventore eligendi dolore
+								animi, fuga deleniti accusantium cumque voluptatum nihil porro! Vitae omnis labore
+								commodi eius cupiditate perferendis quaerat
 								sunt molestiae dignissimos
 								blanditiis.</p>
 							<ul>
@@ -900,19 +999,33 @@
 								<li>Lorem ipsum dolor sit amet, consectetur adipisicing elit. Quod, similique</li>
 								<li>Lorem ipsum dolor sit amet, consectetur adipisicing elit. Quod, similique</li>
 							</ul>
-							<p>Lorem ipsum dolor sit amet, consectetur adipisicing elit. Minima exercitationem esse repellendus accusantium adipisci consequatur, natus eum expedita distinctio nihil porro in ut, commodi, omnis saepe dolorem
+							<p>Lorem ipsum dolor sit amet, consectetur adipisicing elit. Minima exercitationem esse
+								repellendus accusantium adipisci consequatur, natus eum expedita distinctio nihil porro
+								in ut, commodi, omnis saepe dolorem
 								officia illo atque quae
-								mollitia magnam quas dignissimos! Consequuntur ut, impedit similique, eius nobis facilis? Rerum, tempora blanditiis quo ad at. Pariatur dolorem impedit repellat expedita quidem sunt modi ad veritatis, placeat
+								mollitia magnam quas dignissimos! Consequuntur ut, impedit similique, eius nobis
+								facilis? Rerum, tempora blanditiis quo ad at. Pariatur dolorem impedit repellat expedita
+								quidem sunt modi ad veritatis, placeat
 								beatae fuga quod nemo harum
-								inventore laudantium ducimus ipsam ipsum asperiores deleniti cum quasi nam! Vel quibusdam porro error laborum quas numquam inventore velit illo, magnam delectus beatae facilis dicta cum iste aperiam. Repudiandae
+								inventore laudantium ducimus ipsam ipsum asperiores deleniti cum quasi nam! Vel
+								quibusdam porro error laborum quas numquam inventore velit illo, magnam delectus beatae
+								facilis dicta cum iste aperiam. Repudiandae
 								amet, aspernatur ex.
-								Voluptates, alias! Et fugiat recusandae quos excepturi incidunt eaque placeat id, ipsa eveniet consectetur unde maiores dolorum officiis esse ratione, omnis cumque! Vitae amet incidunt ea architecto fugiat
+								Voluptates, alias! Et fugiat recusandae quos excepturi incidunt eaque placeat id, ipsa
+								eveniet consectetur unde maiores dolorum officiis esse ratione, omnis cumque! Vitae amet
+								incidunt ea architecto fugiat
 								reiciendis nisi, quae autem veniam
-								quasi aspernatur, dignissimos perspiciatis natus, corporis fugit aut reprehenderit atque. Ea tempora voluptatibus quidem iure magnam, doloremque. Dicta laborum atque aliquid alias, eligendi voluptates assumenda, at
+								quasi aspernatur, dignissimos perspiciatis natus, corporis fugit aut reprehenderit
+								atque. Ea tempora voluptatibus quidem iure magnam, doloremque. Dicta laborum atque
+								aliquid alias, eligendi voluptates assumenda, at
 								quas sint repellendus,
-								nobis nam vitae velit fugiat maiores, incidunt error itaque quod dolorem minima optio blanditiis mollitia! Beatae quam dignissimos vitae recusandae accusantium maxime iure, esse iusto totam. Ipsam animi, dolore
+								nobis nam vitae velit fugiat maiores, incidunt error itaque quod dolorem minima optio
+								blanditiis mollitia! Beatae quam dignissimos vitae recusandae accusantium maxime iure,
+								esse iusto totam. Ipsam animi, dolore
 								quae! Perspiciatis
-								voluptatibus nemo voluptas repellendus odit ipsa quia dicta inventore eligendi dolore animi, fuga deleniti accusantium cumque voluptatum nihil porro! Vitae omnis labore commodi eius cupiditate perferendis quaerat
+								voluptatibus nemo voluptas repellendus odit ipsa quia dicta inventore eligendi dolore
+								animi, fuga deleniti accusantium cumque voluptatum nihil porro! Vitae omnis labore
+								commodi eius cupiditate perferendis quaerat
 								sunt molestiae dignissimos
 								blanditiis.</p>
 						</div>
@@ -926,26 +1039,48 @@
 							</div>
 						</div>
 						<div class="content">
-							<p>Lorem ipsum dolor sit amet, consectetur adipisicing elit. Dolor similique tenetur, ducimus sapiente possimus. Ut quos incidunt debitis accusantium temporibus perferendis, consectetur voluptatum esse illum doloribus
+							<p>Lorem ipsum dolor sit amet, consectetur adipisicing elit. Dolor similique tenetur,
+								ducimus sapiente possimus. Ut quos incidunt debitis accusantium temporibus perferendis,
+								consectetur voluptatum esse illum doloribus
 								est atque rem soluta
-								sequi nostrum accusamus consequuntur tempore unde illo adipisci. Rerum, eum illo, facere est aperiam, quam molestiae dolorum explicabo libero sunt alias perspiciatis earum sequi. Soluta est, doloribus ipsum
+								sequi nostrum accusamus consequuntur tempore unde illo adipisci. Rerum, eum illo, facere
+								est aperiam, quam molestiae dolorum explicabo libero sunt alias perspiciatis earum
+								sequi. Soluta est, doloribus ipsum
 								dignissimos maxime animi quae
-								porro suscipit molestias optio, vero cum asperiores totam officia quia tenetur ipsam ad sed reprehenderit delectus minima quidem ratione labore. Mollitia, laboriosam voluptate quasi veritatis cum. Voluptas, cum
+								porro suscipit molestias optio, vero cum asperiores totam officia quia tenetur ipsam ad
+								sed reprehenderit delectus minima quidem ratione labore. Mollitia, laboriosam voluptate
+								quasi veritatis cum. Voluptas, cum
 								modi odio, dicta ducimus
-								veniam possimus facilis dolorum incidunt repellendus nemo accusantium iste voluptatum dolor non illo officia id, perferendis, odit nisi tenetur aliquid! Eligendi voluptatum, rem dolore ducimus doloribus.</p>
-							<p>Lorem ipsum dolor sit amet, consectetur adipisicing elit. Minima exercitationem esse repellendus accusantium adipisci consequatur, natus eum expedita distinctio nihil porro in ut, commodi, omnis saepe dolorem
+								veniam possimus facilis dolorum incidunt repellendus nemo accusantium iste voluptatum
+								dolor non illo officia id, perferendis, odit nisi tenetur aliquid! Eligendi voluptatum,
+								rem dolore ducimus doloribus.</p>
+							<p>Lorem ipsum dolor sit amet, consectetur adipisicing elit. Minima exercitationem esse
+								repellendus accusantium adipisci consequatur, natus eum expedita distinctio nihil porro
+								in ut, commodi, omnis saepe dolorem
 								officia illo atque quae
-								mollitia magnam quas dignissimos! Consequuntur ut, impedit similique, eius nobis facilis? Rerum, tempora blanditiis quo ad at. Pariatur dolorem impedit repellat expedita quidem sunt modi ad veritatis, placeat
+								mollitia magnam quas dignissimos! Consequuntur ut, impedit similique, eius nobis
+								facilis? Rerum, tempora blanditiis quo ad at. Pariatur dolorem impedit repellat expedita
+								quidem sunt modi ad veritatis, placeat
 								beatae fuga quod nemo harum
-								inventore laudantium ducimus ipsam ipsum asperiores deleniti cum quasi nam! Vel quibusdam porro error laborum quas numquam inventore velit illo, magnam delectus beatae facilis dicta cum iste aperiam. Repudiandae
+								inventore laudantium ducimus ipsam ipsum asperiores deleniti cum quasi nam! Vel
+								quibusdam porro error laborum quas numquam inventore velit illo, magnam delectus beatae
+								facilis dicta cum iste aperiam. Repudiandae
 								amet, aspernatur ex.
-								Voluptates, alias! Et fugiat recusandae quos excepturi incidunt eaque placeat id, ipsa eveniet consectetur unde maiores dolorum officiis esse ratione, omnis cumque! Vitae amet incidunt ea architecto fugiat
+								Voluptates, alias! Et fugiat recusandae quos excepturi incidunt eaque placeat id, ipsa
+								eveniet consectetur unde maiores dolorum officiis esse ratione, omnis cumque! Vitae amet
+								incidunt ea architecto fugiat
 								reiciendis nisi, quae autem veniam
-								quasi aspernatur, dignissimos perspiciatis natus, corporis fugit aut reprehenderit atque. Ea tempora voluptatibus quidem iure magnam, doloremque. Dicta laborum atque aliquid alias, eligendi voluptates assumenda, at
+								quasi aspernatur, dignissimos perspiciatis natus, corporis fugit aut reprehenderit
+								atque. Ea tempora voluptatibus quidem iure magnam, doloremque. Dicta laborum atque
+								aliquid alias, eligendi voluptates assumenda, at
 								quas sint repellendus,
-								nobis nam vitae velit fugiat maiores, incidunt error itaque quod dolorem minima optio blanditiis mollitia! Beatae quam dignissimos vitae recusandae accusantium maxime iure, esse iusto totam. Ipsam animi, dolore
+								nobis nam vitae velit fugiat maiores, incidunt error itaque quod dolorem minima optio
+								blanditiis mollitia! Beatae quam dignissimos vitae recusandae accusantium maxime iure,
+								esse iusto totam. Ipsam animi, dolore
 								quae! Perspiciatis
-								voluptatibus nemo voluptas repellendus odit ipsa quia dicta inventore eligendi dolore animi, fuga deleniti accusantium cumque voluptatum nihil porro! Vitae omnis labore commodi eius cupiditate perferendis quaerat
+								voluptatibus nemo voluptas repellendus odit ipsa quia dicta inventore eligendi dolore
+								animi, fuga deleniti accusantium cumque voluptatum nihil porro! Vitae omnis labore
+								commodi eius cupiditate perferendis quaerat
 								sunt molestiae dignissimos
 								blanditiis.</p>
 							<ul>
@@ -956,19 +1091,33 @@
 								<li>Lorem ipsum dolor sit amet, consectetur adipisicing elit. Quod, similique</li>
 								<li>Lorem ipsum dolor sit amet, consectetur adipisicing elit. Quod, similique</li>
 							</ul>
-							<p>Lorem ipsum dolor sit amet, consectetur adipisicing elit. Minima exercitationem esse repellendus accusantium adipisci consequatur, natus eum expedita distinctio nihil porro in ut, commodi, omnis saepe dolorem
+							<p>Lorem ipsum dolor sit amet, consectetur adipisicing elit. Minima exercitationem esse
+								repellendus accusantium adipisci consequatur, natus eum expedita distinctio nihil porro
+								in ut, commodi, omnis saepe dolorem
 								officia illo atque quae
-								mollitia magnam quas dignissimos! Consequuntur ut, impedit similique, eius nobis facilis? Rerum, tempora blanditiis quo ad at. Pariatur dolorem impedit repellat expedita quidem sunt modi ad veritatis, placeat
+								mollitia magnam quas dignissimos! Consequuntur ut, impedit similique, eius nobis
+								facilis? Rerum, tempora blanditiis quo ad at. Pariatur dolorem impedit repellat expedita
+								quidem sunt modi ad veritatis, placeat
 								beatae fuga quod nemo harum
-								inventore laudantium ducimus ipsam ipsum asperiores deleniti cum quasi nam! Vel quibusdam porro error laborum quas numquam inventore velit illo, magnam delectus beatae facilis dicta cum iste aperiam. Repudiandae
+								inventore laudantium ducimus ipsam ipsum asperiores deleniti cum quasi nam! Vel
+								quibusdam porro error laborum quas numquam inventore velit illo, magnam delectus beatae
+								facilis dicta cum iste aperiam. Repudiandae
 								amet, aspernatur ex.
-								Voluptates, alias! Et fugiat recusandae quos excepturi incidunt eaque placeat id, ipsa eveniet consectetur unde maiores dolorum officiis esse ratione, omnis cumque! Vitae amet incidunt ea architecto fugiat
+								Voluptates, alias! Et fugiat recusandae quos excepturi incidunt eaque placeat id, ipsa
+								eveniet consectetur unde maiores dolorum officiis esse ratione, omnis cumque! Vitae amet
+								incidunt ea architecto fugiat
 								reiciendis nisi, quae autem veniam
-								quasi aspernatur, dignissimos perspiciatis natus, corporis fugit aut reprehenderit atque. Ea tempora voluptatibus quidem iure magnam, doloremque. Dicta laborum atque aliquid alias, eligendi voluptates assumenda, at
+								quasi aspernatur, dignissimos perspiciatis natus, corporis fugit aut reprehenderit
+								atque. Ea tempora voluptatibus quidem iure magnam, doloremque. Dicta laborum atque
+								aliquid alias, eligendi voluptates assumenda, at
 								quas sint repellendus,
-								nobis nam vitae velit fugiat maiores, incidunt error itaque quod dolorem minima optio blanditiis mollitia! Beatae quam dignissimos vitae recusandae accusantium maxime iure, esse iusto totam. Ipsam animi, dolore
+								nobis nam vitae velit fugiat maiores, incidunt error itaque quod dolorem minima optio
+								blanditiis mollitia! Beatae quam dignissimos vitae recusandae accusantium maxime iure,
+								esse iusto totam. Ipsam animi, dolore
 								quae! Perspiciatis
-								voluptatibus nemo voluptas repellendus odit ipsa quia dicta inventore eligendi dolore animi, fuga deleniti accusantium cumque voluptatum nihil porro! Vitae omnis labore commodi eius cupiditate perferendis quaerat
+								voluptatibus nemo voluptas repellendus odit ipsa quia dicta inventore eligendi dolore
+								animi, fuga deleniti accusantium cumque voluptatum nihil porro! Vitae omnis labore
+								commodi eius cupiditate perferendis quaerat
 								sunt molestiae dignissimos
 								blanditiis.</p>
 						</div>
@@ -981,10 +1130,9 @@
 
 </div>
 
-<!-- Scripts -->
+<!-- development version of vue.js, includes helpful console warnings -->
 <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
-<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
-<script src="assets/js/scripts.js"></script>
+<script src="assets/js/bundle.js"></script>
 </body>
 
 </html>

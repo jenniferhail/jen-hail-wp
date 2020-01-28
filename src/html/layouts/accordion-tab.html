@@ -1,11 +1,12 @@
-<section id="accordion-tabs" class="layout accordion tabs">
+<section id="accordion-tabs" class="layout accordion tabs" data-menutitle="Accordions - Tab">
 	<div class="wrapper">
 		<h2 class="title">Accordion - Tabs</h2>
 		<h2>Lorem ipsum dolor sit.</h2>
 		<div class="row">
 			<div class="col">
 				<ul class="tab-list">
-					<li v-for="(n, index) in 4" class="tab-link"><a v-bind:href="'#tab-' + index">Item {{index}}</a></li>
+					<li v-for="(n, index) in 4" class="tab-link"><a v-bind:href="'#tab-' + index">Item {{index}}</a>
+					</li>
 				</ul>
 			</div>
 			<div class="col">
@@ -13,8 +14,11 @@
 					<div class="acc-item" v-for="(n, index) in 4">
 						<div v-bind:id="'tab-' + index" class="acc-item-wrap">
 							<h3>Lorem ipsum dolor sit amet, consectetur</h3>
-							<p>Lorem ipsum dolor sit amet, consectetur adipisicing elit. Similique animi veniam quis suscipit libero eaque aliquid voluptatem sint soluta obcaecati!</p>
-							<p>Lorem ipsum dolor sit amet, consectetur adipisicing elit. Labore nam vitae repellat, officia eum. Vitae perspiciatis eveniet, vel laudantium similique deserunt mollitia quod non. Modi voluptatibus quaerat nostrum soluta
+							<p>Lorem ipsum dolor sit amet, consectetur adipisicing elit. Similique animi veniam quis
+								suscipit libero eaque aliquid voluptatem sint soluta obcaecati!</p>
+							<p>Lorem ipsum dolor sit amet, consectetur adipisicing elit. Labore nam vitae repellat,
+								officia eum. Vitae perspiciatis eveniet, vel laudantium similique deserunt mollitia quod
+								non. Modi voluptatibus quaerat nostrum soluta
 								fugiat?</p>
 							<p>Lorem ipsum dolor sit amet, consectetur adipisicing elit. Provident, architecto.</p>
 							<ul>
@@ -25,7 +29,8 @@
 								<li>Lorem ipsum dolor sit amet</li>
 								<li>Lorem ipsum dolor sit amet</li>
 							</ul>
-							<p>Lorem ipsum dolor sit amet, consectetur adipisicing elit. A animi laudantium libero doloremque reiciendis esse, quia, ducimus qui tempora consequatur!</p>
+							<p>Lorem ipsum dolor sit amet, consectetur adipisicing elit. A animi laudantium libero
+								doloremque reiciendis esse, quia, ducimus qui tempora consequatur!</p>
 
 						</div>
 					</div>
