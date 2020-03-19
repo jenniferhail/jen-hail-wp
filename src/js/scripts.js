@@ -1,14 +1,7 @@
-jQuery(document).ready(function ($) {
+var $ = require('jquery');
+var accordions = require('./modules/accordions.js');
+var styleguide = require('./modules/style-guide.js');
 
-    // =require layouts/accordion.js
-
-    if($('#app').length) {
-        var app = new Vue({
-            el: '#app',
-            data: {
-                message: 'Hello Vue!',
-            }
-        });
-    }
-    
-});
+// Make sure that you init the styleguide first.
+styleguide.init();
+accordions.init();
