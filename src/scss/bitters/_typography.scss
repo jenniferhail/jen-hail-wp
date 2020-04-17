@@ -48,7 +48,7 @@ h6, .h6 {
     margin: 0 0 30px 0;
 	&.underline {
 		display: inline-block;
-		border-bottom: 2px solid #FFFFFF;
+		border-bottom: 2px solid $primary;
 	}
 }
 
@@ -94,41 +94,13 @@ a {
 
 p {
     a {
+
+        @include link-underline($viewport-background-color, $primary, $base-font-color, $color-selection);
         position: relative;
-        display: inline-flex;
-        padding: 0 8px;
-        color: #fff;
         overflow: hidden;
-        &:before,
-        &:after {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            transition: all $base-duration $base-timing;
-            z-index: -1;
-        }
-        &:before {
-            // opacity: 0;
-            background-color: #006889;
-            transform: translate3d(-100%,0,0);
-        }
-        &:after {
-            transform: translate3d(0,0,0);
-            background-color: $blue;
-        }
+        
         &:hover,
         &:focus {
-            &:before {
-                opacity: 1;
-                transform: translate3d(0,0,0);
-            }
-            &:after {
-                // opacity: 0;
-                transform: translate3d(100%,0,0);
-            }
             // color: $action-color;
             // background-color: #0183ac;
         }
@@ -147,5 +119,5 @@ blockquote {
     padding-left: 20px;
     margin-bottom: 20px;
     font-style: italic;
-    border-left: 2px solid $blue;
+    border-left: 2px solid $primary;
 }

@@ -56,7 +56,7 @@ $_button-background-color-hover: shade($action-color, 20%);
         text-decoration: none;
         transition: all $base-duration $base-timing;
         &:hover {
-            background-color: #ebee27;
+            background-color: $hover;
         }
         &+.btn {
             margin-left: 20px;

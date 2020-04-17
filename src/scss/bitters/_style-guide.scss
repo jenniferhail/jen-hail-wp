@@ -47,10 +47,10 @@
             background-color: #fff;
         }
     }
-    .blue {
-        background-color: $blue;
+    .primary {
+        background-color: $primary;
         &:after {
-            content: '#{$blue}';
+            content: '#{$primary}';
         }
     }
     .light-gray {
@@ -71,10 +71,6 @@
             content: '#{$dark-gray}';
         }
     }
-}
-
-.layout.blue-bg {
-    background-color: $blue;
 }
 
 .type {

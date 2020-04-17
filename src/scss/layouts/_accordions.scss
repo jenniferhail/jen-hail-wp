@@ -13,7 +13,7 @@
             cursor: pointer;
             transition: all $base-duration $base-timing;
             &:hover {
-                background-color: #ebee27;
+                background-color: $hover;
             }
         }
     }

@@ -10615,6 +10615,50 @@ var $ = require('jquery');
 
 module.exports = {
   init: function () {
+    var header = $('header');
+
+    if (header.length > 0) {
+      var headerHeight = header.outerHeight();
+      var padding = 0; // Link is on the same page
+
+      $('a[href*="#"]:not([href="#"])').click(function (e) {
+        if (location.pathname.replace(/^\//, '') == this.pathname.replace(/^\//, '') || location.hostname == this.hostname) {
+          var inTarget = $(this.hash);
+          inTarget = inTarget.length ? inTarget : $('[name=' + this.hash.slice(1) + ']');
+
+          if (inTarget.length) {
+            $('html,body').stop().animate({
+              scrollTop: inTarget.offset().top - headerHeight - padding // offsets for fixed header
+
+            }, 'linear');
+          }
+        }
+      }); // Link is on a different page
+
+      var hash = window.location.hash;
+
+      if (hash == '' || hash == '#' || hash == undefined) {
+        return false;
+      } else {
+        var exTarget = $(hash);
+        exTarget = exTarget.length ? exTarget : $('[name=' + this.hash.slice(1) + ']');
+
+        if (exTarget.length) {
+          $('html,body').stop().animate({
+            scrollTop: exTarget.offset().top - headerHeight - padding //offsets for fixed header
+
+          }, 'linear');
+        }
+      }
+    }
+  }
+};
+
+},{"jquery":1}],4:[function(require,module,exports){
+var $ = require('jquery');
+
+module.exports = {
+  init: function () {
     var app = new Vue({
       el: '#app',
       data: {
@@ -10624,17 +10668,20 @@ module.exports = {
   }
 };
 
-},{"jquery":1}],4:[function(require,module,exports){
+},{"jquery":1}],5:[function(require,module,exports){
 var $ = require('jquery');
 
 var accordions = require('./modules/accordions.js');
+
+var anchors = require('./modules/anchors.js');
 
 var styleguide = require('./modules/style-guide.js'); // Make sure that you init the styleguide first.
 
 
 styleguide.init();
 accordions.init();
+anchors.init();
 
-},{"./modules/accordions.js":2,"./modules/style-guide.js":3,"jquery":1}]},{},[4])
+},{"./modules/accordions.js":2,"./modules/anchors.js":3,"./modules/style-guide.js":4,"jquery":1}]},{},[5])
 
 //# sourceMappingURL=bundle.js.map
