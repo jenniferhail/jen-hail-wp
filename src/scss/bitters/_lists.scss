@@ -1,8 +1,13 @@
 ul,
 ol {
-  list-style-type: none;
   margin: 0;
-  padding: 0;
+  padding: 0 0 0 18px;
+  list-style-type: inherit;
+  font-size: 14px;
+  &.two-col {
+    column-count: 2;
+    column-gap: 45px;
+  }
 }
 
 dl {

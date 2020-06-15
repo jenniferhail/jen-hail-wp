@@ -1,10 +1,29 @@
 footer {
+    padding: 45px 0;
+    background-color: $background-color;
     .wrapper {
-        text-align: center;
+        padding-bottom: 0;
+        margin: 0 $padding;
+        @media screen and (max-width: 600px) {
+            margin: 0 $mobile-padding;
+        }
     }
-    .logo {
-        display: inline-block;
-        width: 100%;
-        max-width: 120px;
+    .row {
+        display: grid;
+        grid-gap: 45px;
+        grid-template-columns: 1fr 1fr;
+        @media screen and ($large) {
+            grid-template-columns: 1fr 1fr 1fr 1fr;
+        }
+    }
+    .endnotes {
+        grid-column: 1 / span 2;
+        @media screen and ($large) {
+            grid-column: 1 / 3;
+        }
+    }
+    .list {
+        padding: 0;
+        list-style-type: none;
     }
 }

@@ -8,7 +8,7 @@
     height: 60px;
     color: #000000;
     transform: translate3d(0, 0, 0);
-    background-color: $action-color;
+    background-color: $alert-color;
     transition: all $base-duration $base-timing;
     z-index: 9999;
     &.hide {

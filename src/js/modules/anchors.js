@@ -7,7 +7,7 @@ module.exports = {
         
         if (header.length > 0) {
             var headerHeight = header.outerHeight();
-            var padding = 0;
+            var padding = 45;
             
             // Link is on the same page
             $('a[href*="#"]:not([href="#"])').click(function(e) {

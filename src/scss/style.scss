@@ -56,9 +56,16 @@
 @import 'layouts/listing';
 @import 'layouts/slider';
 @import 'layouts/table';
+@import 'layouts/work';
 
 //----------------------------------*\
 // APP OPTIONS
 //----------------------------------*/
 @import 'options/cookie-notice';
 @import 'options/notification';
+
+html {
+    visibility: visible;
+    opacity: 1;
+    transition: all 500ms ease;
+}

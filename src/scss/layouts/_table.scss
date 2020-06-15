@@ -1,3 +1,73 @@
+.layout.table {
+  .intro {
+    @media screen and (min-width: 681px) {
+      margin-bottom: 60px;
+    }
+  }
+  .grid .row {
+    position: relative;
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr 1fr;
+    grid-gap: 45px;
+    padding: 10px 0;
+    @media screen and (max-width: 680px) {
+      display: block;
+      padding: 20px 0;
+    }
+    &.titles {
+      margin-bottom: 15px;
+      padding: 0 0 5px;
+      border-bottom: $base-border;
+      font-weight: 500;
+      @media screen and (max-width: 680px) {
+        font-size: 0;
+      }
+    }
+    &.project {
+      overflow: hidden;
+      background-color: #e2ded000;
+      transition: background-color 500ms $base-timing;
+      &:hover {
+        background-color: #e2ded999;
+        transition: background-color 500ms $base-timing;
+      }
+    }
+    .link {
+      border: none;
+      position: absolute;
+      width: 100%;
+      top: 0;
+      right: 0;
+      bottom: 0;
+      left: 0;
+      z-index: 1;
+      &:hover + .hidden-msg {
+        opacity: 0.6;
+        transform: translateX(0);
+      }
+    }
+    .hidden-msg {
+      display: inline-block;
+      padding-left: 5px;
+      font-size: 14px;
+      opacity: 0;
+      transform: translateX(-15px);
+      transition: all $base-duration $base-timing;
+    }
+    .col {
+      position: relative;
+      z-index: 1;
+      &.first {
+        @include uppercase-style;
+        line-height: 2.5;
+      }
+    }
+    .notes {
+      grid-column: 3/5;
+    }
+  }
+}
+
 .layout.tables {
     /* Tables
     ================================== */

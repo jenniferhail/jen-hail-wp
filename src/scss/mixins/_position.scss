@@ -1,3 +1,14 @@
+@mixin hide {
+    transition: transform $base-duration $base-timing, opacity $base-duration $base-timing;
+    transform: translateX(-15px);
+    opacity: 0;
+}
+
+@mixin reveal {
+    transform: translateX(0);
+    opacity: 1;
+}
+
 @mixin position ($position: relative, $coordinates: 0 0 0 0) {
     @if type-of($position) == list {
         $coordinates: $position;

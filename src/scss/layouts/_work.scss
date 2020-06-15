@@ -1,0 +1,71 @@
+.layout.projects {
+    .intro {
+        @media screen and ($large) {
+            display: grid;
+            grid-gap: 45px;
+            grid-template-columns: 1fr 1fr;
+        }
+        margin-bottom: $bottom;
+    }
+    .work {
+        // width: 50%;
+        @media screen and ($large) {
+            display: grid;
+            grid-gap: 3em 45px;
+            grid-template-columns: 1fr 1fr;
+        }
+        .item {
+            // @media screen and ($small) {
+                margin-bottom: 6em;
+            // }
+            &:hover {
+                .link {
+                    @include reveal;
+                }
+            }
+        }
+        .row:first-child {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: $base-border;
+        }
+        // .row:last-child {
+        //     @media screen and (min-width: 601px) {
+        //         display: grid;
+        //         grid-gap: 45px;
+        //         grid-template-columns: 1fr 1fr;
+        //     }
+        // }
+        .title {
+            margin-bottom: 0;
+            padding-right: 10px;
+            font-weight: 400;
+        }
+        a {
+            border: none;
+        }
+        .link {
+            padding-left: 10px;
+            @include uppercase-style();
+            @include hide;
+        }
+        p {
+            margin-bottom: 30px;
+        }
+        .image {
+            display: none;
+            width: 100%;
+            margin-top: 7px;
+            @media screen and ($mobile) {
+                display: none;
+            }
+            img {
+                display: block;
+                filter: grayscale(1);
+            }
+        }
+    }
+}
