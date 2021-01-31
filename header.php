@@ -18,6 +18,8 @@
 	<link rel="icon" type="image/png" sizes="32x32" href="<?php echo get_template_directory_uri(); ?>/dist/assets/favicon/favicon-32x32.png">
 	<link rel="icon" type="image/png" sizes="16x16" href="<?php echo get_template_directory_uri(); ?>/dist/assets/favicon/favicon-16x16.png">
 	<link rel="manifest" href="<?php echo get_template_directory_uri(); ?>/dist/assets/favicon/site.webmanifest">
+	<!-- Pinterest -->
+	<meta name="p:domain_verify" content="96ef4cc74bf707d9057df655867682e5"/>
 
 </head>
 
