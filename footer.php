@@ -6,7 +6,7 @@
             <nav class="endnotes">
                 <h4>Endnotes</h4>
                 <p>
-                    Thank you for visiting! I'll be moving to the Detroit area this summer, 2020, and I'm looking for job opportunities as a front end web developer. Please reach out if you feel like I'm a good fit for your advertising agency or freelance projects.
+                Thank you for visiting! I'm currently looking for a new opportunity as a front end web developer in the Detroit area or remotely. Please reach out if you feel like I'm a good fit for your creative agency or freelance projects.
                 </p>
             </nav>
             <div class="contact">
@@ -20,7 +20,7 @@
                 <h4>Links</h4>
                 <ul class="list">
                     <li class="item"><a href="https://www.instagram.com/jenhail/" target="_blank">Insta</a></li>
-                    <li class="item"><a href="https://twitter.com/thejenhail" target="_blank">Twitter</a></li>
+                    <li class="item"><a href="https://twitter.com/jennhailll" target="_blank">Twitter</a></li>
                 </ul>
             </div>
         </div>
