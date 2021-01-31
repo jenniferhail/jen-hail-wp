@@ -4,6 +4,29 @@
       margin-bottom: 60px;
     }
   }
+  .list-group {
+    .title {
+      display: block;
+      margin-bottom: 15px;
+      padding: 0 0 5px;
+      border-bottom: $base-border;
+      font-weight: 500;
+    }
+    .list {
+      padding: 0;
+      margin: 0;
+    }
+    .item {
+      list-style-type: none;
+      a {
+        border-bottom: 1px solid $background-color;
+        transition: border $base-duration $base-timing;
+        &:hover {
+          border-bottom: $base-border;
+        }
+      }
+    }
+  }
   .grid .row {
     position: relative;
     display: grid;

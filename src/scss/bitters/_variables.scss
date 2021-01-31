@@ -12,10 +12,10 @@ $padding: 45px;
 $mobile-padding: 20px;
 
 // Typography
-@import url('https://fonts.googleapis.com/css?family=Inter:300,400,500|Montserrat:300,400,500|Roboto:300,400,500&display=swap');
-$montserrat: 'Montserrat', sans-serif;
-$inter: 'Inter', sans-serif;
-$roboto: 'Roboto', sans-serif;
+@import url("https://fonts.googleapis.com/css?family=Inter:300,400,500|Montserrat:300,400,500|Roboto:300,400,500&display=swap");
+$montserrat: "Montserrat", sans-serif;
+$inter: "Inter", sans-serif;
+$roboto: "Roboto", sans-serif;
 $base-font-family: $roboto; // 'Helvetica Neue', Helvetica, Arial;
 $heading-font-family: $base-font-family;
 
@@ -40,6 +40,8 @@ $base-z-index: 0;
 // Colors
 $beige: #f2eee8;
 $modern: #f5f1ed;
+$new: #f5efe6;
+
 $ivory: #fefdf3;
 $light-gray: #c3c3c0;
 $medium-gray: #999;
@@ -71,7 +73,7 @@ $base-border-color: $heading-font-color;
 $base-border: 1px solid $base-border-color;
 
 // Background Colors
-$background-color: $modern;
+$background-color: $new;
 
 // Focus
 $focus-outline-color: transparentize($action-color, 0.4);
