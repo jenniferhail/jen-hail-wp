@@ -3,7 +3,7 @@
 get_header();
 ?>
 
-    <section id="gallery" class="layout gallery" style="--vh: 1vh;">
+	<section id="gallery" class="layout gallery" style="--vh: 1vh;">
 		<div class="wrapper">
 			<div class="row">
 				<img class="img-1" src="<?php echo get_template_directory_uri(); ?>/dist/assets/img/smile.jpg" alt="">
@@ -28,12 +28,7 @@ get_header();
 				<div class="col">
 					<h2>About Me</h2>
 					<h3>Web Developer + Designer</h3>
-					<p>Hey, my name is Jennifer, but you can call me Jen.
-							I'm a web developer and graphic designer, currently
-							wrangling code at <a href="https://mightily.com" target="_blank">Mightily</a>. I'm a big fan of hand crafted coffee — I make a
-							Chemex nearly every morning — and I'm inspired by
-							minimalism in architecture, interior design, and
-							photography.</p>					
+					<p>Hey, my name is Jennifer, but you can call me Jen. I'm a web developer and graphic designer, currently wrangling code at <a href="https://www.useallfive.com/" target="_blank">Use All Five</a>. I'm a big fan of matcha lattes and I'm inspired by minimalism in architecture, interior design, and photography.</p>
 				</div>
 				<div class="col">
 				</div>
